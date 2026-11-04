@@ -1,0 +1,59 @@
+{
+    "version": "4.46.0.4716",
+    "description": "NetEase UU Remote: remote desktop and remote game streaming from any device",
+    "homepage": "https://uu.163.com/",
+    "license": "Proprietary",
+    "notes": [
+        "The vendor only ships an NSIS installer, which registers a Windows service (GameViewerService, an autostart service), a virtual display driver and an 'Upgrade.exe' self-updater. This manifest unpacks the installer payload instead, so none of that happens: no service, no driver, no startup entry and no self-update.",
+        "Because the service is not installed, the app runs in client mode only. Remote-control/session hosting from this machine requires the official installer with administrator rights.",
+        "The bundled 'Upgrade.exe' is deleted during install. Update with 'scoop update uu远程'.",
+        "Settings and logs are kept in 'config' and 'log' next to the executable; 'config' is persisted so pairings survive updates."
+    ],
+    "depends": "7zip",
+    "architecture": {
+        "64bit": {
+            "url": "https://a56.gdl.netease.com/UURemote_Setup_4.46.0.4716_1104140726_gwqd.exe",
+            "hash": "ee378fcfd7147df776e380324ad462fabb795014cf95cd011a793b1500cb069d"
+        }
+    },
+    "pre_install": [
+        "$installer = Get-Item \"$dir\\$fname\"",
+        "$stage = Join-Path $env:TEMP ('uu-remote-' + $PID)",
+        "if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "New-Item -ItemType Directory -Path $stage | Out-Null",
+        "& 7z x $installer.FullName \"-o$stage\" -y | Out-Null",
+        "if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the UU Remote installer (7z exit code $LASTEXITCODE).\" }",
+        "$payload = Get-ChildItem -Path $stage -Directory | Where-Object { $_.Name -like '*_38_*' } | Select-Object -First 1",
+        "if ($null -eq $payload) { throw 'NSIS payload directory not found inside the UU Remote installer.' }",
+        "New-Item -ItemType Directory -Path \"$dir\\bin\" -Force | Out-Null",
+        "Copy-Item -Path (Join-Path $payload.FullName '*') -Destination \"$dir\\bin\" -Recurse -Force",
+        "Move-Item \"$dir\\bin\\GameViewerLauncher.exe\" \"$dir\\GameViewer.exe\" -Force",
+        "Remove-Item -Recurse -Force $stage",
+        "Remove-Item -Force $installer.FullName",
+        "Remove-Item \"$dir\\bin\\Upgrade.exe\" -Force -ErrorAction SilentlyContinue"
+    ],
+    "shortcuts": [
+        [
+            "GameViewer.exe",
+            "UU远程"
+        ]
+    ],
+    "persist": "config",
+    "checkver": {
+        "script": [
+            "$request = [System.Net.WebRequest]::Create('https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd')",
+            "$request.AllowAutoRedirect = $false",
+            "try { $response = $request.GetResponse() } catch { $response = $_.Exception.Response }",
+            "$response.Headers['Location']",
+            "$response.Close()"
+        ],
+        "regex": "(?<url>https://[^/?]+/UURemote_Setup_([\\d.]+)_(?<build>\\d+)_gwqd\\.exe)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "$matchUrl"
+            }
+        }
+    }
+}

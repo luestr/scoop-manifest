@@ -1,0 +1,58 @@
+{
+    "version": "26.10.1-nightly.202610272136",
+    "description": "A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents (nightly)",
+    "homepage": "https://tty7.io",
+    "license": "Apache-2.0",
+    "notes": [
+        "Nightly pre-release built from the main branch: expect rough edges. The rolling 'nightly' release tag replaces its assets every night, so the version string changes with each build.",
+        "The vendor's portable ZIP is used as-is: the bundled '.tty7-portable' marker keeps the profile inside the app directory, which Scoop persists in its own 'tty7-desktop-nightly' data folder, separate from the stable 'tty7-desktop' app.",
+        "The bundled 'tty7-updater.exe' is removed during install, so the app cannot update or replace itself; update with 'scoop update tty7-desktop-nightly'.",
+        "tty7 never adds a run-at-login entry: there is no autostart code path in the binary, and the Settings entry called 'Startup & restore' only controls session restore, not Windows startup.",
+        "Run 'tty7-nightly' for the CLI and 'tty7-app-nightly' for the GUI, so both channels can be installed side by side."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-26.10.1-nightly.202610272136-windows-x86_64.zip",
+            "hash": "18787aacc24d31b10f4513843d6c9d6309f3259fdd9033102bc67f60b564e58c"
+        },
+        "arm64": {
+            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-26.10.1-nightly.202610272136-windows-arm64.zip",
+            "hash": "d49d08c5ae69f1a2e44f8096f719b4842aef5058461a41a6d9afd539cbcf2e61"
+        }
+    },
+    "post_install": "Remove-Item \"$dir\\tty7-updater.exe\" -Force -ErrorAction SilentlyContinue",
+    "bin": [
+        [
+            "tty7.exe",
+            "tty7-nightly"
+        ],
+        [
+            "tty7-app.exe",
+            "tty7-app-nightly"
+        ]
+    ],
+    "shortcuts": [
+        [
+            "tty7-app.exe",
+            "tty7 Desktop-nightly"
+        ]
+    ],
+    "persist": "data",
+    "checkver": {
+        "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/nightly.json",
+        "jsonpath": "$.version"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-$version-windows-x86_64.zip"
+            },
+            "arm64": {
+                "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-$version-windows-arm64.zip"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/checksums.txt"
+        }
+    }
+}

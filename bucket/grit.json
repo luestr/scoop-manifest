@@ -1,0 +1,29 @@
+{
+    "version": "0.5.28",
+    "description": "Reimplementing Git in Rust. Like a boss",
+    "homepage": "https://grit-scm.com",
+    "license": "MIT",
+    "notes": [
+        "'grit' is a drop-in-style Git implementation: the shim is added to PATH, so run 'grit status', 'grit clone <url>' and friends from any shell.",
+        "Shell completions ship in 'completions\\' inside the app directory ('grit.ps1', '_grit', 'grit.bash', 'grit.fish'); load them by hand if you need them. This manifest does not touch your PowerShell profile.",
+        "grit has no built-in updater and no run-at-login hook, so nothing is registered with Windows startup and nothing replaces the Scoop-managed files. Update with 'scoop update grit'."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/gitbutlerapp/grit/releases/download/v0.5.28/grit-x86_64-pc-windows-msvc.zip",
+            "hash": "5083d98cf8ec6bf0f7782d41c9fe7ac7584376dd17ef5b388e72c8f6b87849f0"
+        }
+    },
+    "bin": "grit.exe",
+    "checkver": {
+        "url": "https://github.com/gitbutlerapp/grit/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/gitbutlerapp/grit/releases/download/v$version/grit-x86_64-pc-windows-msvc.zip"
+            }
+        }
+    }
+}

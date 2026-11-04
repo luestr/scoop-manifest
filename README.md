@@ -14,14 +14,26 @@ scoop install luestr/<app>
 | Manifest | Description |
 |---|---|
 | `abacus-cli` | Terminal-based coding agent that reads code, edits files and runs commands in your repository |
+| `Adguard` | System-wide ad blocker, tracker filter and privacy guard for Windows |
 | `cherry-studio` | Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base |
+| `Clippi-Desktop` | A lightweight clipboard manager built with Rust and GPUI |
+| `Finch` | An agent client for local execution, memory and desktop workflows |
+| `Flectar-Mail` | A fast native mail client with instant startup and a small memory footprint |
+| `Git-Agent` | A native desktop Git client for reviewing changes, browsing history and resolving conflicts |
 | `github-stars-manager` | AI-powered manager for GitHub starred repositories with semantic search, auto-categorization and release tracking |
+| `grit` | Reimplementing Git in Rust (CLI) |
 | `kitter-desktop` | A simple, lightweight skill manager built in Rust |
+| `Pulse` | A modern file manager for Windows with tabs, search, previews and shell integration |
 | `sniffy-desktop` | An open-source traffic capture and debugging proxy for HTTP/HTTPS, WebSocket, gRPC and SSE |
+| `tty7-Desktop` | A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents |
+| `tty7-Desktop-nightly` | A terminal workbench in pure Rust (nightly build) |
+| `UnBlock` | Find and unlock files stuck in 'File in Use' or 'Access Denied' on Windows |
+| `UU远程` | NetEase UU Remote: remote desktop and remote game streaming from any device |
 | `Wu-Desktop` | The fast, native code editor and agent workspace |
 | `yapfast-nightly` | A Discord client without the web browser, native and written in Rust (nightly) |
 | `yapfast-releases` | A Discord client without the web browser, native and written in Rust |
 | `WorkBuddy-CN` | AI agent for everyday office work that turns a single sentence into finished reports, decks and spreadsheets |
+| `Zen-Desktop` | System-wide ad-blocker and privacy guard for Windows, macOS and Linux |
 
 ## Keeping manifests up to date
 

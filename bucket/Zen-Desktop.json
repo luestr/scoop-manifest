@@ -1,0 +1,43 @@
+{
+    "version": "0.29.0",
+    "description": "System-wide ad-blocker and privacy guard for Windows, macOS and Linux",
+    "homepage": "https://irbis.sh/zen/",
+    "license": "MIT",
+    "notes": [
+        "This is the vendor's 'noselfupdate' build: self-updates are compiled out (the linked binary sets selfupdate.NoSelfUpdate=true, so no updater is ever created, no update manifest is fetched and no app-update.yml/squirrel component exists). Update Zen with 'scoop update zen-desktop'.",
+        "Zen does not register itself for autostart on first run. The 'Autostart' switch in Settings calls autostart.Manager.Enable(), which only then writes HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run value 'Zen' = '<path to Zen.exe> --start --hidden'. Nothing is pre-written by this manifest, so the checkbox starts out off.",
+        "All state (Config\\config.json, certificates, cached filter lists, Logs) lives in %LOCALAPPDATA%\\Zen, outside the Scoop directory, so it survives updates; nothing is written next to Zen.exe and there is nothing to persist.",
+        "Zen sets the system proxy while running and installs a local root CA the first time you start the proxy; both are user-controlled from the app.",
+        "The interface is rendered by Wails and needs the Microsoft Edge WebView2 Runtime (preinstalled on Windows 11 and up-to-date Windows 10)."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/irbis-sh/zen-desktop/releases/download/v0.29.0/Zen_windows_amd64_noselfupdate.zip",
+            "hash": "f879c31f8280aeccfa2a7c12b414ddf1c18d70a81b09151337e8690c31794c62"
+        },
+        "arm64": {
+            "url": "https://github.com/irbis-sh/zen-desktop/releases/download/v0.29.0/Zen_windows_arm64_noselfupdate.zip",
+            "hash": "3cf7bf48672f5436ad67a5794f91b22116b96c367d43bc52c6fd5df136d236d4"
+        }
+    },
+    "shortcuts": [
+        [
+            "Zen.exe",
+            "Zen Desktop"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/irbis-sh/zen-desktop/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)\""
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/irbis-sh/zen-desktop/releases/download/v$version/Zen_windows_amd64_noselfupdate.zip"
+            },
+            "arm64": {
+                "url": "https://github.com/irbis-sh/zen-desktop/releases/download/v$version/Zen_windows_arm64_noselfupdate.zip"
+            }
+        }
+    }
+}

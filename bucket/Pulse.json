@@ -1,0 +1,83 @@
+{
+    "version": "1.0.58",
+    "description": "A modern file manager for Windows with tabs, search, previews and shell integration",
+    "homepage": "https://github.com/jimmgreen/pulse",
+    "license": "Apache-2.0",
+    "notes": [
+        "The vendor ships a self-extracting bundle ('PPKM' pack) instead of a portable ZIP; this manifest decodes that pack during install, so the application is laid out once and runs from the Scoop directory.",
+        "Settings, tab state, tags and the content index live in '%LOCALAPPDATA%\\Pulse' and survive updates.",
+        "'launch_on_startup' is written as false into '%LOCALAPPDATA%\\Pulse\\app.json' on first install, so Pulse does not add itself to Windows startup; turn it on from the app's settings if you want it.",
+        "'auto_check_updates' is also set to false, so the built-in updater never runs. Update with 'scoop update pulse'."
+    ],
+    "depends": "7zip",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/jimmgreen/pulse/releases/download/v1.0.58/PulseSetup-1.0.58.exe",
+            "hash": "a2dee2348b610bb3dc4882fe80ea8dd94dcef73bb6ca2e7808585ad932ccbe6c"
+        }
+    },
+    "pre_install": [
+        "$wrapper = Get-Item \"$dir\\$fname\"",
+        "$stage = Join-Path $env:TEMP ('pulse-' + $PID)",
+        "if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "New-Item -ItemType Directory -Path $stage | Out-Null",
+        "& 7z x $wrapper.FullName \"-o$stage\" -y | Out-Null",
+        "$packFile = Get-ChildItem -Path $stage -File | Where-Object { $_.Name -like 'PulseSetup-*' } | Select-Object -First 1",
+        "if ($null -eq $packFile) { throw \"Failed to decode the Pulse bundle (7z exit code $LASTEXITCODE).\" }",
+        "$bytes = [System.IO.File]::ReadAllBytes($packFile.FullName)",
+        "$jsonStart = -1",
+        "for ($i = 0; $i -lt [Math]::Min(64, $bytes.Length); $i++) { if ($bytes[$i] -eq 0x7B) { $jsonStart = $i; break } }",
+        "if ($jsonStart -lt 0) { throw 'Pulse pack header not found: no JSON manifest after the PPKM magic.' }",
+        "$text = [System.Text.Encoding]::ASCII.GetString($bytes, $jsonStart, $bytes.Length - $jsonStart)",
+        "$depth = 0; $inString = $false; $escaped = $false; $jsonEnd = -1",
+        "for ($i = 0; $i -lt $text.Length; $i++) {",
+        "    $c = $text[$i]",
+        "    if ($escaped) { $escaped = $false; continue }",
+        "    if ($c -eq [char]'\\') { if ($inString) { $escaped = $true }; continue }",
+        "    if ($c -eq [char]'\"') { $inString = -not $inString; continue }",
+        "    if ($inString) { continue }",
+        "    if ($c -eq [char]'{') { $depth++ } elseif ($c -eq [char]'}') { $depth--; if ($depth -eq 0) { $jsonEnd = $i; break } }",
+        "}",
+        "if ($jsonEnd -lt 0) { throw 'Pulse pack manifest is truncated or malformed.' }",
+        "$manifestJson = [System.Text.Encoding]::UTF8.GetString($bytes, $jsonStart, $jsonEnd + 1)",
+        "$manifestData = $manifestJson | ConvertFrom-Json",
+        "$offset = $jsonStart + $jsonEnd + 1",
+        "foreach ($entry in $manifestData.files) {",
+        "    $target = Join-Path $dir $entry.path",
+        "    $parent = Split-Path $target -Parent",
+        "    if ($parent -and !(Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }",
+        "    $buffer = New-Object byte[] ([int]$entry.size)",
+        "    [Array]::Copy($bytes, $offset, $buffer, 0, [int]$entry.size)",
+        "    [System.IO.File]::WriteAllBytes($target, $buffer)",
+        "    $offset += [int]$entry.size",
+        "}",
+        "Remove-Item -Recurse -Force $stage",
+        "Remove-Item -Force $wrapper.FullName"
+    ],
+    "post_install": [
+        "$configDir = Join-Path $env:LOCALAPPDATA 'Pulse'",
+        "$config = Join-Path $configDir 'app.json'",
+        "if (!(Test-Path $config)) {",
+        "    New-Item -ItemType Directory -Path $configDir -Force | Out-Null",
+        "    $settings = '{' + \"`r`n\" + '  \"version\": 4,' + \"`r`n\" + '  \"launch_on_startup\": false,' + \"`r`n\" + '  \"auto_check_updates\": false' + \"`r`n\" + '}' + \"`r`n\"",
+        "    [System.IO.File]::WriteAllText($config, $settings, (New-Object System.Text.UTF8Encoding($false)))",
+        "}"
+    ],
+    "shortcuts": [
+        [
+            "pulse.exe",
+            "Pulse"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/jimmgreen/pulse/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)\""
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/jimmgreen/pulse/releases/download/v$version/PulseSetup-$version.exe"
+            }
+        }
+    }
+}
