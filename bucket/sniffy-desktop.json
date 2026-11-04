@@ -1,0 +1,43 @@
+{
+    "version": "0.1.0-beta.5",
+    "description": "An open-source traffic capture and debugging proxy for HTTP/HTTPS, WebSocket, gRPC and SSE",
+    "homepage": "https://github.com/mintfog/sniffy",
+    "license": "Apache-2.0",
+    "notes": "Requires the Microsoft Edge WebView2 Runtime to render the interface (preinstalled on Windows 11 and up-to-date Windows 10).",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/mintfog/sniffy/releases/download/v0.1.0-beta.5/sniffy-desktop-windows-amd64.exe#/sniffy.exe",
+            "hash": "39a1923bc27d723a3495f83b82b943429e1a3f6325d35aaeb02cc9317ca6a8cc"
+        }
+    },
+    "post_install": [
+        "$desktop = if ($global) { [Environment]::GetFolderPath('CommonDesktopDirectory') } else { [Environment]::GetFolderPath('Desktop') }",
+        "$shell = New-Object -ComObject WScript.Shell",
+        "$lnk = $shell.CreateShortcut(\"$desktop\\Sniffy.lnk\")",
+        "$lnk.TargetPath = \"$dir\\sniffy.exe\"",
+        "$lnk.WorkingDirectory = \"$dir\"",
+        "$lnk.IconLocation = \"$dir\\sniffy.exe,0\"",
+        "$lnk.Save()"
+    ],
+    "shortcuts": [
+        [
+            "sniffy.exe",
+            "Sniffy"
+        ]
+    ],
+    "pre_uninstall": [
+        "$desktop = if ($global) { [Environment]::GetFolderPath('CommonDesktopDirectory') } else { [Environment]::GetFolderPath('Desktop') }",
+        "Remove-Item \"$desktop\\Sniffy.lnk\" -Force -ErrorAction SilentlyContinue"
+    ],
+    "checkver": {
+        "github": "https://api.github.com/repos/mintfog/sniffy/releases/latest",
+        "regex": "v([\\d.]+(?:-[\\w.]+)?)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/mintfog/sniffy/releases/download/v$version/sniffy-desktop-windows-amd64.exe#/sniffy.exe"
+            }
+        }
+    }
+}

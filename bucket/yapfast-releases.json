@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "description": "A Discord client without the web browser, native and written in Rust",
+    "homepage": "https://yapfast.com",
+    "license": "GPL-3.0-or-later",
+    "notes": "Settings and encrypted session data are kept in '%LOCALAPPDATA%\\Yapfast'.",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/yapfast/yapfast/releases/download/v0.2.0/Yapfast-0.2.0-windows-x64.zip",
+            "hash": "0f25e73117b9914a05e8ca15aed24cda9c90d5037e8ab4f2f388208187c12a16"
+        }
+    },
+    "extract_dir": "Yapfast-0.2.0-windows-x64",
+    "shortcuts": [
+        [
+            "yapfast.exe",
+            "Yapfast"
+        ]
+    ],
+    "checkver": {
+        "github": "https://github.com/yapfast/yapfast"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/yapfast/yapfast/releases/download/v$version/Yapfast-$version-windows-x64.zip"
+            }
+        },
+        "extract_dir": "Yapfast-$version-windows-x64",
+        "hash": {
+            "url": "https://github.com/yapfast/yapfast/releases/download/v$version/SHA256SUMS.txt"
+        }
+    }
+}

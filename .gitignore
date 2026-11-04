@@ -1,0 +1,8 @@
+*.sublime-workspace
+*~
+._*
+page.html
+checkver-*.html
+__pycache__/
+*.pyc
+.venv/
