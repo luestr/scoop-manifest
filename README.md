@@ -15,6 +15,7 @@ scoop install luestr/<app>
 |---|---|
 | `abacus-cli` | Terminal-based coding agent that reads code, edits files and runs commands in your repository |
 | `Adguard` | System-wide ad blocker, tracker filter and privacy guard for Windows |
+| `Alacritty` | A cross-platform, GPU-accelerated terminal emulator |
 | `cherry-studio` | Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base |
 | `Clippi-Desktop` | A lightweight clipboard manager built with Rust and GPUI |
 | `Finch` | An agent client for local execution, memory and desktop workflows |
@@ -22,6 +23,7 @@ scoop install luestr/<app>
 | `Git-Agent` | A native desktop Git client for reviewing changes, browsing history and resolving conflicts |
 | `github-stars-manager` | AI-powered manager for GitHub starred repositories with semantic search, auto-categorization and release tracking |
 | `grit` | Reimplementing Git in Rust (CLI) |
+| `JCode-Desktop` | Native spatial desktop client for Jcode, a coding agent driven by Claude or ChatGPT subscriptions |
 | `kitter-desktop` | A simple, lightweight skill manager built in Rust |
 | `Pulse` | A modern file manager for Windows with tabs, search, previews and shell integration |
 | `sniffy-desktop` | An open-source traffic capture and debugging proxy for HTTP/HTTPS, WebSocket, gRPC and SSE |

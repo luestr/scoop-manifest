@@ -1,0 +1,36 @@
+{
+    "version": "0.17.0",
+    "description": "A cross-platform, GPU-accelerated terminal emulator",
+    "homepage": "https://alacritty.org/",
+    "license": "Apache-2.0",
+    "notes": [
+        "The vendor's 'portable' build is a single self-contained 'alacritty.exe'; it is installed as-is and renamed to 'alacritty.exe'.",
+        "Alacritty has no built-in updater: there is no update component, no scheduled task and nothing that replaces its own files. Update with 'scoop update alacritty'.",
+        "Alacritty never registers a run-at-login entry, so nothing is added to Windows startup.",
+        "Configuration is read from '%APPDATA%\\alacritty\\alacritty.toml', which survives updates; use 'alacritty --config-file <path>' for a per-profile config."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/alacritty/alacritty/releases/download/v0.17.0/Alacritty-v0.17.0-portable.exe#/alacritty.exe",
+            "hash": "5ad70ddc5c2a2bfe84084a2c4c73558e9360914f035a902d7a69277be7249f1f"
+        }
+    },
+    "bin": "alacritty.exe",
+    "shortcuts": [
+        [
+            "alacritty.exe",
+            "Alacritty"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/alacritty/alacritty/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)\""
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/alacritty/alacritty/releases/download/v$version/Alacritty-v$version-portable.exe#/alacritty.exe"
+            }
+        }
+    }
+}
