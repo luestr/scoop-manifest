@@ -1,0 +1,36 @@
+{
+    "version": "1.1.16",
+    "description": "The fast, native code editor and agent workspace",
+    "homepage": "https://github.com/dstrml/wu",
+    "license": "GPL-3.0-or-later, Apache-2.0",
+    "notes": "Please disable Wu's auto-update in the settings, otherwise the built-in updater may install the app outside of Scoop's control.",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/dstrml/wu/releases/download/v1.1.16/Wu-x86_64.exe",
+            "hash": "6901f8545d8e3e249ea6d86425b6677d534366a38dbb533da06880686da5d53c"
+        }
+    },
+    "installer": {
+        "script": [
+            "Expand-InnoArchive -Path \"$dir\\$fname\" -ExtractDir '{app}'",
+            "Expand-InnoArchive -Path \"$dir\\$fname\" -ExtractDir '{code_GetInstallDir}' -Removal"
+        ]
+    },
+    "bin": "bin\\wu.exe",
+    "shortcuts": [
+        [
+            "Wu.exe",
+            "Wu"
+        ]
+    ],
+    "checkver": {
+        "github": "https://github.com/dstrml/wu"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/dstrml/wu/releases/download/v$version/Wu-x86_64.exe"
+            }
+        }
+    }
+}

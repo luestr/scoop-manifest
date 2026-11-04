@@ -14,10 +14,14 @@ scoop install luestr/<app>
 | Manifest | Description |
 |---|---|
 | `abacus-cli` | Terminal-based coding agent that reads code, edits files and runs commands in your repository |
+| `cherry-studio` | Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base |
+| `github-stars-manager` | AI-powered manager for GitHub starred repositories with semantic search, auto-categorization and release tracking |
 | `kitter-desktop` | A simple, lightweight skill manager built in Rust |
 | `sniffy-desktop` | An open-source traffic capture and debugging proxy for HTTP/HTTPS, WebSocket, gRPC and SSE |
+| `Wu-Desktop` | The fast, native code editor and agent workspace |
 | `yapfast-nightly` | A Discord client without the web browser, native and written in Rust (nightly) |
 | `yapfast-releases` | A Discord client without the web browser, native and written in Rust |
+| `WorkBuddy-CN` | AI agent for everyday office work that turns a single sentence into finished reports, decks and spreadsheets |
 
 ## Keeping manifests up to date
 
