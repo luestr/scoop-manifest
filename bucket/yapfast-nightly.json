@@ -1,16 +1,16 @@
 {
-    "version": "0.3.0-nightly.20261027.8",
+    "version": "0.3.0-nightly.20261104.9",
     "description": "A Discord client without the web browser, native and written in Rust",
     "homepage": "https://yapfast.com",
     "license": "GPL-3.0-or-later",
     "notes": "Nightly pre-release built from the main branch: expect rough edges. Yapfast keeps its settings and encrypted session data in '$persist_dir', so it stays separate from the stable 'yapfast-releases' app.",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/yapfast/yapfast/releases/download/v0.3.0-nightly.20261027.8/Yapfast-0.3.0-nightly.20261027.8-windows-x64.zip",
-            "hash": "a579bd929048f7e590946da0dbc87de27ff16c4047133ee8a0db446a921c326b"
+            "url": "https://github.com/yapfast/yapfast/releases/download/v0.3.0-nightly.20261104.9/Yapfast-0.3.0-nightly.20261104.9-windows-x64.zip",
+            "hash": "9ca405b778a4e4a34cfaff2ea86e0641849a20b141c85ca099fcd647ccd3f484"
         }
     },
-    "extract_dir": "Yapfast-0.3.0-nightly.20261027.8-windows-x64",
+    "extract_dir": "Yapfast-0.3.0-nightly.20261104.9-windows-x64",
     "shortcuts": [
         [
             "yapfast.exe",
