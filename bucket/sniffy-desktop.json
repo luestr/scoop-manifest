@@ -30,8 +30,8 @@
         "Remove-Item \"$desktop\\Sniffy.lnk\" -Force -ErrorAction SilentlyContinue"
     ],
     "checkver": {
-        "github": "https://api.github.com/repos/mintfog/sniffy/releases/latest",
-        "regex": "v([\\d.]+(?:-[\\w.]+)?)"
+        "url": "https://github.com/mintfog/sniffy/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+(?:-[\\w.]+)?)"
     },
     "autoupdate": {
         "architecture": {
