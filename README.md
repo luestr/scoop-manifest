@@ -30,7 +30,7 @@ scoop install luestr/<app>
 | `tty7-Desktop` | A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents |
 | `tty7-Desktop-nightly` | A terminal workbench in pure Rust (nightly build) |
 | `UnBlock` | Find and unlock files stuck in 'File in Use' or 'Access Denied' on Windows |
-| `UU远程` | NetEase UU Remote: remote desktop and remote game streaming from any device |
+| `UU-Remote` | NetEase UU Remote: remote desktop and remote game streaming from any device |
 | `Wu-Desktop` | The fast, native code editor and agent workspace |
 | `yapfast-nightly` | A Discord client without the web browser, native and written in Rust (nightly) |
 | `yapfast-releases` | A Discord client without the web browser, native and written in Rust |
@@ -70,7 +70,7 @@ Notes:
 - Every `checkver` shape in this bucket is supported, including `jsonpath` used
   as the version itself (`tty7-Desktop-nightly`) and `script` blocks, which are
   evaluated with `pwsh`/`powershell` exactly like `bin/checkver.ps1`
-  (`UU远程`, which has to read the vendor API's `Location` header). Capture
+  (`UU-Remote`, which has to read the vendor API's `Location` header). Capture
   groups are numbered the .NET way, so a named group that appears before the
   version group does not shift it out of slot 1 (`Adguard`).
 - Hashes come from `autoupdate.hash.url` when present, otherwise from the digest

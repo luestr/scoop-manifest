@@ -6,7 +6,7 @@
     "notes": [
         "The vendor only ships an NSIS installer, which registers a Windows service (GameViewerService, an autostart service), a virtual display driver and an 'Upgrade.exe' self-updater. This manifest unpacks the installer payload instead, so none of that happens: no service, no driver, no startup entry and no self-update.",
         "Because the service is not installed, the app runs in client mode only. Remote-control/session hosting from this machine requires the official installer with administrator rights.",
-        "The bundled 'Upgrade.exe' is deleted during install. Update with 'scoop update uu远程'.",
+        "The bundled 'Upgrade.exe' is deleted during install. Update with 'scoop update uu-remote'.",
         "Settings and logs are kept in 'config' and 'log' next to the executable; 'config' is persisted so pairings survive updates."
     ],
     "depends": "7zip",
