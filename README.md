@@ -15,7 +15,7 @@ scoop install luestr/<app>
 |---|---|
 | `abacus-cli` | Terminal-based coding agent that reads code, edits files and runs commands in your repository |
 | `Adguard` | System-wide ad blocker, tracker filter and privacy guard for Windows |
-| `Alacritty` | A cross-platform, GPU-accelerated terminal emulator |
+| `Alacritty-Portable` | A cross-platform, GPU-accelerated terminal emulator |
 | `cherry-studio` | Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base |
 | `Clippi-Desktop` | A lightweight clipboard manager built with Rust and GPUI |
 | `Finch` | An agent client for local execution, memory and desktop workflows |

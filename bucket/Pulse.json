@@ -21,7 +21,7 @@
         "$stage = Join-Path $env:TEMP ('pulse-' + $PID)",
         "if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
         "New-Item -ItemType Directory -Path $stage | Out-Null",
-        "& 7z x $wrapper.FullName \"-o$stage\" -y | Out-Null",
+        "& 7z x $wrapper.FullName \"-o$stage\" -y 2>&1 | Out-Null",
         "$packFile = Get-ChildItem -Path $stage -File | Where-Object { $_.Name -like 'PulseSetup-*' } | Select-Object -First 1",
         "if ($null -eq $packFile) { throw \"Failed to decode the Pulse bundle (7z exit code $LASTEXITCODE).\" }",
         "$bytes = [System.IO.File]::ReadAllBytes($packFile.FullName)",

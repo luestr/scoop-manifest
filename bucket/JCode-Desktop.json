@@ -6,7 +6,7 @@
     "notes": [
         "The vendor's portable ZIP is unpacked as-is into the Scoop directory; the bundled 'jcode.exe' and 'jcode-harness-api-bridge.exe' are the agent runtime that 'jcode-desktop.exe' launches, so all three stay together.",
         "Settings, sessions and logs live in '%USERPROFILE%\\.jcode' (override with the JCODE_HOME environment variable), not in the install directory, so they survive updates and 'scoop uninstall'.",
-        "The built-in updater is switched off: on first install '%USERPROFILE%\\.jcode\\config.toml' is seeded with '[features] check_updates = false', which is the vendor's documented equivalent of passing --no-update. An existing config file is never touched. Update with 'scoop update jcode-desktop'.",
+        "The built-in updater is switched off: '%USERPROFILE%\\.jcode\\config.toml' is created when missing and patched when it already exists, so '[features] check_updates' ends up false. That is the vendor's documented equivalent of passing --no-update on every launch. Update with 'scoop update jcode-desktop'.",
         "JCode never registers a run-at-login entry: there is no autostart code path in the binaries, so nothing is added to Windows startup.",
         "The bundled 'jcode' CLI is not added to PATH to avoid clashing with a separate Jcode install; run it from the app directory if you need it."
     ],
@@ -25,10 +25,25 @@
     "post_install": [
         "$jcodeHome = Join-Path $env:USERPROFILE '.jcode'",
         "$config = Join-Path $jcodeHome 'config.toml'",
+        "if (!(Test-Path $jcodeHome)) { New-Item -ItemType Directory -Path $jcodeHome -Force | Out-Null }",
+        "$utf8 = New-Object System.Text.UTF8Encoding($false)",
         "if (!(Test-Path $config)) {",
-        "    if (!(Test-Path $jcodeHome)) { New-Item -ItemType Directory -Path $jcodeHome -Force | Out-Null }",
         "    $settings = '[features]' + \"`r`n\" + '# Check for and install updates during startup. Disabled so Scoop keeps owning the install.' + \"`r`n\" + 'check_updates = false' + \"`r`n\"",
-        "    [System.IO.File]::WriteAllText($config, $settings, (New-Object System.Text.UTF8Encoding($false)))",
+        "    [System.IO.File]::WriteAllText($config, $settings, $utf8)",
+        "} else {",
+        "    $text = [System.IO.File]::ReadAllText($config)",
+        "    if ($text -match '(?m)^\\s*check_updates\\s*=\\s*true\\s*$') {",
+        "        $text = [regex]::Replace($text, '(?m)^(\\s*)check_updates\\s*=\\s*true\\s*$', '$1check_updates = false')",
+        "    } elseif ($text -notmatch '(?m)^\\s*check_updates\\s*=') {",
+        "        if ($text -match '(?m)^\\[features\\]\\s*$') {",
+        "            $text = $text -replace '(?m)^\\[features\\]\\s*$', \"[features]`r`ncheck_updates = false\"",
+        "        } else {",
+        "            $text = $text.TrimEnd() + \"`r`n`r`n[features]`r`ncheck_updates = false`r`n\"",
+        "        }",
+        "    } else {",
+        "        $text = $null",
+        "    }",
+        "    if ($null -ne $text) { [System.IO.File]::WriteAllText($config, $text, $utf8) }",
         "}"
     ],
     "shortcuts": [

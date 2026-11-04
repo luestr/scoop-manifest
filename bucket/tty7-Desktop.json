@@ -4,7 +4,7 @@
     "homepage": "https://tty7.io",
     "license": "Apache-2.0",
     "notes": [
-        "The vendor's portable ZIP is used as-is: the bundled '.tty7-portable' marker keeps the profile inside the app directory, which Scoop persists as 'data'.",
+        "The vendor's portable ZIP is used as-is. tty7 only runs in portable mode when it finds both the bundled '.tty7-portable' marker and a 'data' directory next to the executable; Scoop's persisted 'data' folder supplies the second half, so appearance, sessions and daemon state stay inside the Scoop directory. If that folder is deleted, tty7 silently falls back to '%APPDATA%\\tty7'.",
         "The bundled 'tty7-updater.exe' is removed during install, so the app cannot update or replace itself; update with 'scoop update tty7-desktop'.",
         "tty7 never adds a run-at-login entry: there is no autostart code path in the binary, and the Settings entry called 'Startup & restore' only controls session restore, not Windows startup.",
         "Run 'tty7' for the CLI and 'tty7-app' for the GUI."

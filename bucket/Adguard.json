@@ -54,14 +54,9 @@
         ]
     ],
     "checkver": {
-        "script": [
-            "$page = (Invoke-WebRequest -Uri 'https://github.com/AdguardTeam/AdguardForWindows/releases/latest' -UseBasicParsing).Content",
-            "$tag = [regex]::Match($page, '/releases/expanded_assets/(v[\\d.]+)').Groups[1].Value",
-            "$assets = (Invoke-WebRequest -Uri \"https://github.com/AdguardTeam/AdguardForWindows/releases/expanded_assets/$tag\" -UseBasicParsing).Content",
-            "$asset = [regex]::Match($assets, 'AdGuard-[\\d.]+\\.exe').Value",
-            "\"$tag $asset\""
-        ],
-        "regex": "(?<tag>v[\\d.]+) AdGuard-([\\d.]+)\\.exe"
+        "url": "https://api.github.com/repos/AdguardTeam/AdguardForWindows/releases/latest",
+        "jsonpath": "$.assets[0].browser_download_url",
+        "regex": "/download/(?<tag>v[\\d.]+)/AdGuard-([\\d.]+)\\.exe"
     },
     "autoupdate": {
         "architecture": {
