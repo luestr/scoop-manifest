@@ -72,6 +72,32 @@ GITHUB_RELEASE_DOWNLOAD = re.compile(
     r"^https://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)/releases/download/[^/]+/"
 )
 
+# .NET named-group / backreference syntax, which Scoop accepts because it compiles
+# manifests with System.Text.RegularExpressions. Python's ``re`` needs the ``P``.
+DOTNET_GROUP_RE = re.compile(r"\(\?(?:<(?![=!])|')(?P<name>[\w]+)(?:>|')")
+DOTNET_BACKREF_RE = re.compile(r"\\k<(?P<name>[\w]+)>|\\k'(?P<name2>[\w]+)'")
+
+
+def translate_scoop_regex(pattern: str) -> str:
+    """Rewrite .NET-only regex syntax into its Python ``re`` equivalent.
+
+    Scoop compiles every manifest pattern with System.Text.RegularExpressions, so a
+    bucket may legitimately contain ``(?<version>...)`` or ``\\k<version>``. Python
+    rejects both, so translate them before compiling and leave everything else --
+    including lookarounds such as ``(?=`` / ``(?!`` / ``(?<=`` / ``(?<!`` -- untouched.
+    """
+    pattern = DOTNET_GROUP_RE.sub(lambda m: f"(?P<{m.group('name')}>", pattern)
+    pattern = DOTNET_BACKREF_RE.sub(
+        lambda m: f"(?P={m.group('name') or m.group('name2')})", pattern
+    )
+    return pattern
+
+
+def compile_scoop_regex(pattern: str, flags: int = 0) -> "re.Pattern[str]":
+    """Compile a manifest-supplied regex, accepting .NET syntax."""
+    return re.compile(translate_scoop_regex(pattern), flags)
+
+
 
 # --------------------------------------------------------------------------- #
 # console helpers
@@ -718,7 +744,7 @@ def _version_from_tag(tag: str, regex: str, replace: Optional[str]) -> VersionIn
         # match a bare tag; fall back to a tag-shaped pattern so capture groups such as
         # ``${1}`` still resolve.
         try:
-            found = re.compile(pattern).search(tag)
+            found = compile_scoop_regex(pattern).search(tag)
         except re.error:
             found = None
         if found:
@@ -838,7 +864,7 @@ def resolve_version(http: Http, manifest: Dict[str, Any], name: str) -> VersionI
     if reverse:
         texts = list(reversed(texts))
 
-    pattern = re.compile(regex)
+    pattern = compile_scoop_regex(regex)
     version: Optional[str] = None
     matches: Dict[str, str] = {}
     groups: Tuple[Optional[str], ...] = ()
@@ -900,7 +926,7 @@ def _hash_from_text(body: str, basename: str, regex: Optional[str]) -> Optional[
         pattern = pattern.replace(key, value)
     pattern = pattern.replace("$basename", re.escape(basename))
     try:
-        compiled = re.compile(pattern, re.MULTILINE)
+        compiled = compile_scoop_regex(pattern, re.MULTILINE)
     except re.error as exc:
         raise UpdateError(f"invalid hash find regex {pattern!r}: {exc}") from exc
     match = compiled.search(body)
