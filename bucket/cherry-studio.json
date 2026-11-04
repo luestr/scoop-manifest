@@ -2,10 +2,10 @@
     "version": "2.1.10",
     "description": "Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base",
     "homepage": "https://cherry-ai.com",
-    "license": "AGPL-3.0-or-later",
+    "license": "AGPL-3.0-only",
     "notes": [
-        "The portable launcher unpacks ~290 MB into a fresh temp folder on every start, so this manifest extracts the payload once during install and runs the real executable instead. Startup is therefore as fast as a regular install.",
-        "User data lives in the persisted 'data' folder and survives updates. In-app updates are disabled in portable mode, so update Cherry Studio with 'scoop update cherry-studio'."
+        "The vendor's NSIS installer is unpacked during install instead of being run, so the payload is laid out once and the app starts directly from the Scoop directory.",
+        "User data lives in the persisted 'data' folder and survives updates. The built-in updater is inactive in this layout, so update Cherry Studio with 'scoop update cherry-studio'."
     ],
     "depends": "7zip",
     "suggest": {
@@ -13,24 +13,29 @@
     },
     "architecture": {
         "64bit": {
-            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.1.10/Cherry-Studio-2.1.10-win-x64-portable.exe",
-            "hash": "78d5ca9befa5a479292e8735de4cf07046e3af659cabd77987fcd62f11d06da0"
+            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.1.10/Cherry-Studio-2.1.10-win-x64-setup.exe",
+            "hash": "f0c56cb51f711fe3983c802acbef52f75fb3ec22820637f4760bd4d218ab82bf"
         },
         "arm64": {
-            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.1.10/Cherry-Studio-2.1.10-win-arm64-portable.exe",
-            "hash": "e05a09b009ccee5230ba897100936279f994ce77f3296b93a719040acb8bdd33"
+            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.1.10/Cherry-Studio-2.1.10-win-arm64-setup.exe",
+            "hash": "6d2bdbad9a47172d8b0949d1e209ecd616125cd5ee78fd00aa71443e32f812c3"
         }
     },
     "pre_install": [
         "$wrapper = Get-Item \"$dir\\$fname\"",
         "$stage = Join-Path $env:TEMP (\"cherry-studio-\" + $PID)",
-        "if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
-        "New-Item -ItemType Directory -Path $stage | Out-Null",
-        "& 7z e $wrapper.FullName -ir!'app-*.7z' -o\"$stage\" -y | Out-Null",
-        "$inner = Get-ChildItem -Path $stage -Filter 'app-*.7z' | Select-Object -First 1",
-        "if ($null -eq $inner) { throw 'Inner app archive (app-*.7z) not found inside the NSIS wrapper' }",
-        "& 7z x $inner.FullName -o\"$dir\" -y | Out-Null",
-        "Remove-Item -Recurse -Force $stage",
+        "try {",
+        "    if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "    New-Item -ItemType Directory -Path $stage | Out-Null",
+        "    & 7z e $wrapper.FullName -ir!'app-*.7z' -o\"$stage\" -y | Out-Null",
+        "    if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the NSIS installer (7z exit code $LASTEXITCODE).\" }",
+        "    $inner = Get-ChildItem -Path $stage -Filter 'app-*.7z' | Select-Object -First 1",
+        "    if ($null -eq $inner) { throw 'Inner app archive (app-*.7z) not found inside the NSIS installer' }",
+        "    & 7z x $inner.FullName -o\"$dir\" -y | Out-Null",
+        "    if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the inner app archive (7z exit code $LASTEXITCODE).\" }",
+        "} finally {",
+        "    if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "}",
         "Remove-Item -Force $wrapper.FullName"
     ],
     "env_set": {
@@ -49,10 +54,10 @@
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v$version/Cherry-Studio-$version-win-x64-portable.exe"
+                "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v$version/Cherry-Studio-$version-win-x64-setup.exe"
             },
             "arm64": {
-                "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v$version/Cherry-Studio-$version-win-arm64-portable.exe"
+                "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v$version/Cherry-Studio-$version-win-arm64-setup.exe"
             }
         }
     }
