@@ -67,6 +67,12 @@ Notes:
   HTML pages, not the REST API — so there is no 60 req/h anonymous rate limit.
   Manifests that hardcode `api.github.com` fall back to equivalent HTML pages
   automatically. Export `GITHUB_TOKEN` to use the API with its 5000 req/h quota.
+- Every `checkver` shape in this bucket is supported, including `jsonpath` used
+  as the version itself (`tty7-Desktop-nightly`) and `script` blocks, which are
+  evaluated with `pwsh`/`powershell` exactly like `bin/checkver.ps1`
+  (`UU远程`, which has to read the vendor API's `Location` header). Capture
+  groups are numbered the .NET way, so a named group that appears before the
+  version group does not shift it out of slot 1 (`Adguard`).
 - Hashes come from `autoupdate.hash.url` when present, otherwise from the digest
   GitHub publishes on the release page. Downloading the asset to compute a hash
   is only the last resort; `--no-download` disables it.

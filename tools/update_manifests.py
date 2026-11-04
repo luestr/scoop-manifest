@@ -12,7 +12,13 @@ Supported checkver strategies
 * ``"checkver": "github"``                -- repository taken from ``homepage``
 * ``{"github": "<repo or API url>"}``     -- explicit repository
 * ``{"url": "<url>", "regex"|"jsonpath"|"xpath": ...}`` -- generic scraping
+* ``{"script": [...], "regex": ...}``     -- PowerShell snippet whose stdout is the
+  page, evaluated with ``pwsh``/``powershell`` exactly like ``bin/checkver.ps1``
 * ``checkver.regex`` / ``checkver.replace`` are honored in every mode.
+* ``jsonpath``/``xpath`` without ``regex`` uses the extracted value as the version,
+  which is what Scoop does for a manifest such as ``tty7-Desktop-nightly``.
+* Capture-group numbering follows .NET, not Python: unnamed groups are numbered
+  first, so ``(?<tag>v[\\d.]+)/App-([\\d.]+)`` yields the version from group 1.
 
 Supported hash sources (in the order this script tries them)
 ------------------------------------------------------------
@@ -51,6 +57,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -734,29 +741,113 @@ def _apply_replace(template: str, version: str, matches: Dict[str, str], groups:
     return substitute(template, substitution)
 
 
+def _scoop_groups(found: "re.Match[str]", pattern: "re.Pattern[str]") -> Tuple[Optional[str], ...]:
+    """Return capture groups in the order .NET (and therefore Scoop) numbers them.
+
+    .NET numbers unnamed groups first, then named ones, while Python numbers strictly
+    by position. ``(?<tag>v[\\d.]+)/App-([\\d.]+)`` is group 1 = ``tag`` in Python but
+    group 1 = the version in .NET, so positional ``${1}`` templates need the reshuffle.
+    """
+    named_indexes = set(pattern.groupindex.values())
+    unnamed = [found.group(i) for i in range(1, pattern.groups + 1) if i not in named_indexes]
+    named = [found.group(i) for i in sorted(named_indexes)]
+    return tuple(unnamed + named)
+
+
+def _scoop_version_group(found: "re.Match[str]", pattern: "re.Pattern[str]") -> Optional[str]:
+    """Pick the capture Scoop treats as the version.
+
+    Scoop uses the first unnamed group, falling back to a group literally called
+    ``version`` when every group is named. Python's ``found.group(1)`` is wrong for
+    patterns that open with a named group such as ``(?<tag>...)``.
+    """
+    if not pattern.groups:
+        return found.group(0)
+    named_indexes = set(pattern.groupindex.values())
+    for index in range(1, pattern.groups + 1):
+        if index not in named_indexes:
+            value = found.group(index)
+            if value is not None:
+                return value
+    return found.groupdict().get("version")
+
+
 def _version_from_tag(tag: str, regex: str, replace: Optional[str]) -> VersionInfo:
     """Turn a release tag into a version via ``checkver.regex`` / ``checkver.replace``."""
     matches: Dict[str, str] = {}
     candidate = tag
     found = None
+    found_pattern = None
     for pattern in (regex, TAG_SHAPED_REGEX):
         # The configured regex is usually page-shaped (``/releases/tag/...``) and cannot
         # match a bare tag; fall back to a tag-shaped pattern so capture groups such as
         # ``${1}`` still resolve.
         try:
-            found = compile_scoop_regex(pattern).search(tag)
+            compiled = compile_scoop_regex(pattern)
+            found = compiled.search(tag)
         except re.error:
             found = None
         if found:
+            found_pattern = compiled
             break
     if found:
-        candidate = found.group(1) or tag
+        candidate = _scoop_version_group(found, found_pattern) or tag
         matches = {k: v for k, v in found.groupdict().items() if v is not None}
     candidate = re.sub(r"^(?:v|V)(?=\d)", "", candidate)
-    groups: Tuple[Optional[str], ...] = found.groups() if found else ()
+    groups: Tuple[Optional[str], ...] = _scoop_groups(found, found_pattern) if found else ()
     if replace:
         candidate = _apply_replace(replace, candidate, matches, groups)
     return VersionInfo(candidate.strip(), matches)
+
+
+def _run_checkver_script(script: Any) -> str:
+    """Evaluate a ``checkver.script`` block the way bin/checkver.ps1 does.
+
+    Scoop runs the snippet with ``Invoke-Command`` and treats its output as the page
+    text. PowerShell is the only interpreter that can honour that contract, so the
+    snippet is handed to ``pwsh`` (preferred) or ``powershell`` on stdin.
+    """
+    code = "\r\n".join(script) if isinstance(script, (list, tuple)) else str(script)
+    if not code.strip():
+        raise UpdateError("checkver.script is empty")
+    exe = shutil.which("pwsh") or shutil.which("powershell")
+    if not exe:
+        raise UpdateError("checkver.script needs PowerShell (pwsh or powershell) on PATH")
+    try:
+        proc = subprocess.run(
+            [exe, "-NoProfile", "-NonInteractive", "-Command", "-"],
+            input=code,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    except subprocess.TimeoutExpired:
+        raise UpdateError("checkver.script timed out after 180s") from None
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout).strip().splitlines()
+        raise UpdateError(
+            f"checkver.script failed: {detail[-1] if detail else f'exit code {proc.returncode}'}"
+        )
+    return proc.stdout
+
+
+def _resolve_script_version(script: Any, regex: Optional[str], replace: Optional[str]) -> VersionInfo:
+    """Resolve a version from a ``checkver.script`` block plus its ``checkver.regex``."""
+    if not regex:
+        raise UpdateError("checkver.script needs a regex to pull the version out of its output")
+    page = _run_checkver_script(script)
+    pattern = compile_scoop_regex(regex)
+    found = pattern.search(page)
+    if not found:
+        raise UpdateError(f"regex {regex!r} did not match the output of checkver.script")
+    version = _scoop_version_group(found, pattern)
+    if not version:
+        raise UpdateError(f"regex {regex!r} captured no version from checkver.script output")
+    matches = {k: v for k, v in found.groupdict().items() if v is not None}
+    groups = _scoop_groups(found, pattern)
+    if replace:
+        version = _apply_replace(replace, version, matches, groups)
+    return VersionInfo(version.strip(), matches)
 
 
 def resolve_version(http: Http, manifest: Dict[str, Any], name: str) -> VersionInfo:
@@ -777,6 +868,14 @@ def resolve_version(http: Http, manifest: Dict[str, Any], name: str) -> VersionI
     else:
         raise UpdateError(f"unsupported checkver type: {type(checkver).__name__}")
 
+    if isinstance(checkver, dict) and checkver.get("script"):
+        # A script replaces the HTTP fetch entirely: its stdout is the page text.
+        return _resolve_script_version(
+            checkver["script"],
+            checkver.get("regex") or checkver.get("re"),
+            checkver.get("replace"),
+        )
+
     if not source_url:
         raise UpdateError("checkver has neither 'github' nor 'url'")
 
@@ -785,6 +884,7 @@ def resolve_version(http: Http, manifest: Dict[str, Any], name: str) -> VersionI
     xpath = checkver.get("xpath") if isinstance(checkver, dict) else None
     replace = checkver.get("replace") if isinstance(checkver, dict) else None
     reverse = bool(checkver.get("reverse")) if isinstance(checkver, dict) else False
+    explicit_regex = bool(regex)
 
     repo = github_repo_from_url(source_url) if explicit_github or "github.com" in source_url else None
     api_mode = source_url.startswith("https://api.github.com")
@@ -864,6 +964,17 @@ def resolve_version(http: Http, manifest: Dict[str, Any], name: str) -> VersionI
     if reverse:
         texts = list(reversed(texts))
 
+    # ``jsonpath``/``xpath`` without a regex: Scoop takes the extracted value as the
+    # version verbatim (no page-shaped regex is applied to it).
+    if (jsonpath or xpath) and not explicit_regex:
+        value = next((t for t in texts if t is not None and str(t).strip()), None)
+        if value is None:
+            raise UpdateError(f"jsonpath/xpath {jsonpath or xpath!r} matched nothing in {source_url}")
+        version = str(value).strip()
+        if replace:
+            version = _apply_replace(replace, version, {}, ())
+        return VersionInfo(version, {})
+
     pattern = compile_scoop_regex(regex)
     version: Optional[str] = None
     matches: Dict[str, str] = {}
@@ -872,9 +983,9 @@ def resolve_version(http: Http, manifest: Dict[str, Any], name: str) -> VersionI
         found = pattern.search(text)
         if not found:
             continue
-        version = found.group(1)
+        version = _scoop_version_group(found, pattern)
         matches = {k: v for k, v in found.groupdict().items() if v is not None}
-        groups = found.groups()
+        groups = _scoop_groups(found, pattern)
         break
     if not version:
         raise UpdateError(f"regex {regex!r} did not match in {source_url}")
