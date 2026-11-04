@@ -2,8 +2,9 @@
     "version": "1.1.16",
     "description": "The fast, native code editor and agent workspace",
     "homepage": "https://github.com/dstrml/wu",
-    "license": "GPL-3.0-or-later, Apache-2.0",
+    "license": "GPL-3.0-or-later | Apache-2.0",
     "notes": "Please disable Wu's auto-update in the settings, otherwise the built-in updater may install the app outside of Scoop's control.",
+    "depends": "innounp",
     "architecture": {
         "64bit": {
             "url": "https://github.com/dstrml/wu/releases/download/v1.1.16/Wu-x86_64.exe",
@@ -12,8 +13,13 @@
     },
     "installer": {
         "script": [
-            "Expand-InnoArchive -Path \"$dir\\$fname\" -ExtractDir '{app}'",
-            "Expand-InnoArchive -Path \"$dir\\$fname\" -ExtractDir '{code_GetInstallDir}' -Removal"
+            "$inno = Get-Command innounp -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1",
+            "if (!$inno) { throw 'innounp.exe was not found on PATH; the innounp dependency failed to install.' }",
+            "& $inno.Source -x -b -q \"-d$dir\" '-c{app}' \"$dir\\$fname\" | Out-Null",
+            "if ($LASTEXITCODE -ne 0) { throw \"Failed to unpack the '{app}' payload (innounp exit code $LASTEXITCODE).\" }",
+            "& $inno.Source -x -b -q \"-d$dir\" '-c{code_GetInstallDir}' \"$dir\\$fname\" | Out-Null",
+            "if ($LASTEXITCODE -ne 0) { throw \"Failed to unpack the '{code_GetInstallDir}' payload (innounp exit code $LASTEXITCODE).\" }",
+            "Remove-Item \"$dir\\$fname\" -Force"
         ]
     },
     "bin": "bin\\wu.exe",

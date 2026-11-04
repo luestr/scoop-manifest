@@ -5,7 +5,7 @@
     "license": "Proprietary",
     "notes": [
         "The vendor ships an NSIS installer that repacks the Electron payload into a fresh temp folder on every start, so this manifest extracts the payload once during install and launches the real executable instead. Startup is therefore as fast as a regular install.",
-        "User data lives in '%APPDATA%\\WorkBuddy' and survives updates, so 'scoop update' keeps your settings. Prefer 'scoop update workbuddy-cn' over the in-app updater so Scoop keeps managing the installation."
+        "Settings, sessions and logs live in '%USERPROFILE%\\.workbuddy' and survive updates, so 'scoop update' keeps your data. Prefer 'scoop update workbuddy-cn' over the in-app updater so Scoop keeps managing the installation."
     ],
     "depends": "7zip",
     "suggest": {
