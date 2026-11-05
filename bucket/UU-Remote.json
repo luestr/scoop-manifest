@@ -4,10 +4,10 @@
     "homepage": "https://uu.163.com/",
     "license": "Proprietary",
     "notes": [
-        "The vendor only ships an NSIS installer, which registers a Windows service (GameViewerService, an autostart service), a virtual display driver and an 'Upgrade.exe' self-updater. This manifest unpacks the installer payload instead, so none of that happens: no service, no driver, no startup entry and no self-update.",
-        "Because the service is not installed, the app runs in client mode only. Remote-control/session hosting from this machine requires the official installer with administrator rights.",
-        "The bundled 'Upgrade.exe' is deleted during install. Update with 'scoop update uu-remote'.",
-        "Settings and logs are kept in 'config' and 'log' next to the executable; 'config' is persisted so pairings survive updates."
+        "Unpacks the official installer payload instead of running the setup, so no 'GameViewerService' service, no Run entry and no 'Upgrade.exe' self-updater are installed.",
+        "The UU virtual display driver is installed with the bundled 'devcon.exe' (device 'Root\\GameViewerIddDriver'); this needs administrator rights, so install and uninstall each show a UAC prompt.",
+        "Without the vendor service the app runs in client mode; remote-control hosting features that depend on 'GameViewerService' are unavailable.",
+        "Settings and logs are kept in 'config' and 'log' next to the executable; 'config' is persisted so settings survive updates."
     ],
     "depends": "7zip",
     "architecture": {
@@ -30,7 +30,38 @@
         "Move-Item \"$dir\\bin\\GameViewerLauncher.exe\" \"$dir\\GameViewer.exe\" -Force",
         "Remove-Item -Recurse -Force $stage",
         "Remove-Item -Force $installer.FullName",
-        "Remove-Item \"$dir\\bin\\Upgrade.exe\" -Force -ErrorAction SilentlyContinue"
+        "Remove-Item \"$dir\\bin\\Upgrade.exe\" -Force -ErrorAction SilentlyContinue",
+        "Remove-Item \"$dir\\bin\\bak\\Upgrade.exe\" -Force -ErrorAction SilentlyContinue"
+    ],
+    "post_install": [
+        "$devcon = \"$dir\\bin\\drivers\\devcon.exe\"",
+        "$inf = \"$dir\\bin\\drivers\\GameViewerIddDriver\\GameViewerIddDriver.inf\"",
+        "if (!(Test-Path -LiteralPath $devcon)) { throw 'devcon.exe not found in the unpacked payload.' }",
+        "if (!(Test-Path -LiteralPath $inf)) { throw 'GameViewerIddDriver.inf not found in the unpacked payload.' }",
+        "Remove-Item -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\GameViewer', 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\UURemote' -Force -ErrorAction SilentlyContinue",
+        "$lines = @(",
+        "    '$ErrorActionPreference = ''Stop''',",
+        "    '$devcon = ''__DEVCON__''',",
+        "    '$inf = ''__INF__''',",
+        "    '$ok = $false',",
+        "    'foreach ($attempt in 1..2) {',",
+        "    '    & $devcon remove ''Root\\GameViewerIddDriver'' | Out-Null',",
+        "    '    Start-Sleep -Seconds 1',",
+        "    '    $p = Start-Process -FilePath $devcon -ArgumentList @(''install'', $inf, ''Root\\GameViewerIddDriver'') -Wait -PassThru',",
+        "    '    if ($p.ExitCode -eq 0) { $ok = $true; break }',",
+        "    '    if (Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.FriendlyName -eq ''GameViewer Virtual Display Adapter'' }) { $ok = $true; break }',",
+        "    '    Start-Sleep -Seconds 2',",
+        "    '}',",
+        "    'if (!$ok) { exit 1 }',",
+        "    'Remove-Item -LiteralPath ''HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\GameViewer'', ''HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\UURemote'' -Force -ErrorAction SilentlyContinue',",
+        "    'exit 0'",
+        ")",
+        "$script = ($lines -join \"`r`n\").Replace('__DEVCON__', $devcon).Replace('__INF__', $inf)",
+        "$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))",
+        "$p = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', $encoded)",
+        "if ($p.ExitCode -ne 0) { throw \"UU Remote virtual display driver install failed with exit code $($p.ExitCode).\" }",
+        "Start-Sleep -Seconds 2",
+        "if (!(Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.FriendlyName -eq 'GameViewer Virtual Display Adapter' })) { throw 'UU Remote virtual display driver was not installed.' }"
     ],
     "shortcuts": [
         [
@@ -39,13 +70,48 @@
         ]
     ],
     "persist": "config",
+    "pre_uninstall": [
+        "Get-Process | Where-Object { $_.Path -like \"$(appdir $app)\\*\" } | Stop-Process -Force -ErrorAction SilentlyContinue",
+        "Start-Sleep -Seconds 2"
+    ],
+    "uninstaller": {
+        "script": [
+            "$devcon = \"$dir\\bin\\drivers\\devcon.exe\"",
+            "if (!(Test-Path -LiteralPath $devcon)) { return }",
+            "$lines = @(",
+            "    '$ErrorActionPreference = ''SilentlyContinue''',",
+            "    '$devcon = ''__DEVCON__''',",
+            "    '& $devcon remove ''Root\\GameViewerIddDriver'' | Out-Null',",
+            "    'Start-Sleep -Seconds 2',",
+            "    'Get-ChildItem \"$env:SystemRoot\\INF\\oem*.inf\" -ErrorAction SilentlyContinue | ForEach-Object { if ((Get-Content -LiteralPath $_.FullName -Raw -ErrorAction SilentlyContinue) -match ''GameViewerIddDriver'') { & pnputil.exe /delete-driver $_.Name /uninstall /force | Out-Null } }',",
+            "    'Remove-Item -LiteralPath ''HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\GameViewer'', ''HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\UURemote'' -Force -ErrorAction SilentlyContinue',",
+            "    'exit 0'",
+            ")",
+            "$script = ($lines -join \"`r`n\").Replace('__DEVCON__', $devcon)",
+            "$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))",
+            "$p = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', $encoded)",
+            "if ($p.ExitCode -ne 0) { throw \"UU Remote virtual display driver removal failed with exit code $($p.ExitCode).\" }"
+        ]
+    },
+    "post_uninstall": [
+        "Remove-Item -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\GameViewer', 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\UURemote' -Force -ErrorAction SilentlyContinue",
+        "Remove-Item -LiteralPath \"$env:USERPROFILE\\Desktop\\UU远程.lnk\", \"$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs\\UU远程.lnk\" -Force -ErrorAction SilentlyContinue"
+    ],
     "checkver": {
         "script": [
-            "$request = [System.Net.WebRequest]::Create('https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd')",
-            "$request.AllowAutoRedirect = $false",
-            "try { $response = $request.GetResponse() } catch { $response = $_.Exception.Response }",
-            "$response.Headers['Location']",
-            "$response.Close()"
+            "$best = $null",
+            "1..6 | ForEach-Object {",
+            "    $request = [System.Net.WebRequest]::Create('https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd')",
+            "    $request.AllowAutoRedirect = $false",
+            "    try { $response = $request.GetResponse() } catch { $response = $_.Exception.Response }",
+            "    $location = $response.Headers['Location']",
+            "    $response.Close()",
+            "    if ($location -match 'UURemote_Setup_([\\d.]+)_(\\d+)_gwqd\\.exe') {",
+            "        $candidate = [version]$matches[1]",
+            "        if ($null -eq $best -or $candidate -gt $best.Version) { $best = [pscustomobject]@{ Version = $candidate; Url = $location } }",
+            "    }",
+            "}",
+            "$best.Url"
         ],
         "regex": "(?<url>https://[^/?]+/UURemote_Setup_([\\d.]+)_(?<build>\\d+)_gwqd\\.exe)"
     },
