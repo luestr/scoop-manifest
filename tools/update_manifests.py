@@ -98,7 +98,7 @@ USER_AGENT = "Scoop/1.0 (+https://scoop.sh)"
 DEFAULT_TIMEOUT = 60
 RETRIES = 3
 # Manifests kept in flight at once; also caps concurrent HTTP requests.
-DEFAULT_JOBS = 8
+DEFAULT_JOBS = 10
 
 # Built-in default patterns, mirroring bin/checkver.ps1
 TAG_SHAPED_REGEX = r"^(?:v|V)?(?P<version>[\d][\w.+-]*)$"

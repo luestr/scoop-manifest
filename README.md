@@ -42,7 +42,9 @@ No CI required. `tools/update_manifests.py` is a single-file, stdlib-only
 Python 3.8+ script that walks `bucket/*.json`, resolves each manifest's newest
 upstream version through its `checkver` block, and rewrites `version`, `url`,
 `hash` and any other version-dependent field (`extract_dir`, `notes`, …) from
-the `autoupdate` block.
+the `autoupdate` block. The GitHub-specific lookup rules (latest tag, explicit
+tag, asset URLs and SHA-256 sources) are documented in
+[docs/github-release.md](docs/github-release.md).
 
 ```pwsh
 python tools\update_manifests.py                  # update everything
