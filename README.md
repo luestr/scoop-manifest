@@ -50,6 +50,7 @@ python tools\update_manifests.py                  # update everything
 python tools\update_manifests.py -n               # dry run, report only
 python tools\update_manifests.py kitter-desktop   # one app
 python tools\update_manifests.py -f               # recompute even if unchanged
+python tools\update_manifests.py -j 4             # four apps at a time
 python tools\update_manifests.py --commit --push  # commit and push the result
 ```
 
@@ -73,6 +74,10 @@ Notes:
   (`UU-Remote`, which has to read the vendor API's `Location` header). Capture
   groups are numbered the .NET way, so a named group that appears before the
   version group does not shift it out of slot 1 (`Adguard`).
+- Apps are updated in parallel (`-j/--jobs`, default 8) and the per-architecture
+  downloads of a single manifest are hashed concurrently too, with the same value
+  as a cap on in-flight HTTP requests. Output still reads one app per block, so
+  `-j 1` gives the old strictly sequential run.
 - Hashes come from `autoupdate.hash.url` when present, otherwise from the digest
   GitHub publishes on the release page. Downloading the asset to compute a hash
   is only the last resort; `--no-download` disables it.

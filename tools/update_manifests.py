@@ -37,6 +37,16 @@ that hardcode ``api.github.com``; those fall back to equivalent HTML pages
 automatically. Set ``GITHUB_TOKEN`` or pass ``--token`` to use the API with a
 5000 req/h quota instead.
 
+Concurrency
+-----------
+Manifests are maintained in parallel (``-j/--jobs``, default 8) and the downloads
+of a single manifest -- one per architecture -- are hashed in parallel as well. A
+semaphore caps in-flight HTTP requests at the same ``--jobs`` value, so the
+network sees a bounded number of connections, and each worker reuses the pages it
+has already fetched. Output never interleaves: every worker buffers its own log
+lines and the driver prints them as one block. Pass ``-j 1`` for the old strictly
+sequential behaviour.
+
 Usage
 -----
     python tools/update_manifests.py                  # update everything
@@ -46,6 +56,7 @@ Usage
     python tools/update_manifests.py --commit         # git commit the result
     python tools/update_manifests.py --commit --push  # ... and push
     python tools/update_manifests.py --no-download    # never fetch asset bytes
+    python tools/update_manifests.py -j 4             # four manifests at a time
 
 Exit codes: 0 = ok (with or without changes), 1 = at least one manifest failed.
 """
@@ -60,17 +71,34 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 USER_AGENT = "Scoop/1.0 (+https://scoop.sh)"
 DEFAULT_TIMEOUT = 60
 RETRIES = 3
+# Manifests kept in flight at once; also caps concurrent HTTP requests.
+DEFAULT_JOBS = 8
 
 # Built-in default patterns, mirroring bin/checkver.ps1
 TAG_SHAPED_REGEX = r"^(?:v|V)?(?P<version>[\d][\w.+-]*)$"
@@ -119,25 +147,56 @@ def _init_stdout() -> None:
 
 _COLOR = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
+_PRINT_LOCK = threading.Lock()
+# Per-thread log buffer installed by capture_output(); see _emit.
+_log_local = threading.local()
+
 
 def _c(text: str, code: str) -> str:
     return f"\033[{code}m{text}\033[0m" if _COLOR else text
 
 
+def _emit(text: str, stream: IO[str] = sys.stdout) -> None:
+    """Write one line, or collect it when this thread is buffering its output."""
+    buffer: Optional[List[str]] = getattr(_log_local, "buffer", None)
+    if buffer is not None:
+        buffer.append(text)
+        return
+    with _PRINT_LOCK:
+        print(text, file=stream, flush=True)
+
+
 def info(msg: str) -> None:
-    print(msg)
+    _emit(msg)
 
 
 def ok(msg: str) -> None:
-    print(_c(msg, "32"))
+    _emit(_c(msg, "32"))
 
 
 def warn(msg: str) -> None:
-    print(_c(f"warning: {msg}", "33"), file=sys.stderr)
+    _emit(_c(f"warning: {msg}", "33"), sys.stderr)
 
 
 def error(msg: str) -> None:
-    print(_c(f"error: {msg}", "31"), file=sys.stderr)
+    _emit(_c(f"error: {msg}", "31"), sys.stderr)
+
+
+@contextmanager
+def capture_output() -> Iterator[List[str]]:
+    """Collect this thread's log lines instead of printing them.
+
+    Parallel workers use this so the messages of one manifest cannot interleave with
+    another's; the driver prints each block in a single locked write once the worker
+    returns, which keeps the output readable while runs still overlap.
+    """
+    lines: List[str] = []
+    previous: Optional[List[str]] = getattr(_log_local, "buffer", None)
+    _log_local.buffer = lines
+    try:
+        yield lines
+    finally:
+        _log_local.buffer = previous
 
 
 class UpdateError(Exception):
@@ -148,12 +207,26 @@ class UpdateError(Exception):
 # HTTP layer
 # --------------------------------------------------------------------------- #
 class Http:
-    """Tiny urllib wrapper with retries, a Scoop user agent and optional token."""
+    """Tiny urllib wrapper with retries, a Scoop user agent and optional token.
 
-    def __init__(self, token: Optional[str] = None, timeout: int = DEFAULT_TIMEOUT) -> None:
+    The same instance may be used from several threads: the caches are guarded by a
+    lock and identical URLs are fetched once even when they are requested at the same
+    time. ``limiter`` (a semaphore) caps how many requests are in flight in total.
+    """
+
+    def __init__(
+        self,
+        token: Optional[str] = None,
+        timeout: int = DEFAULT_TIMEOUT,
+        limiter: Optional[threading.BoundedSemaphore] = None,
+    ) -> None:
         self.token = token
         self.timeout = timeout
+        self.limiter = limiter
+        self._lock = threading.Lock()
+        self._key_locks: Dict[str, threading.Lock] = {}
         self._json_cache: Dict[str, Any] = {}
+        self._text_cache: Dict[str, str] = {}
 
     def _open(self, url: str, accept: str = "*/*"):
         headers = {"User-Agent": USER_AGENT, "Accept": accept}
@@ -166,7 +239,10 @@ class Http:
         last: Optional[Exception] = None
         for attempt in range(RETRIES):
             try:
-                return func()
+                if self.limiter is None:
+                    return func()
+                with self.limiter:
+                    return func()
             except urllib.error.HTTPError as exc:
                 if exc.code == 403 and "api.github.com" in url:
                     raise UpdateError(
@@ -182,8 +258,26 @@ class Http:
                 time.sleep(1.5 * (attempt + 1))
         raise UpdateError(f"cannot fetch {url}: {last}")
 
+    def _cached(self, cache: Dict[str, Any], key: str, load: Callable[[], Any]) -> Any:
+        """Return ``cache[key]``, calling ``load`` once per key -- also across threads."""
+        with self._lock:
+            if key in cache:
+                return cache[key]
+            key_lock = self._key_locks.setdefault(key, threading.Lock())
+        with key_lock:
+            with self._lock:
+                if key in cache:
+                    return cache[key]
+            value = load()
+            with self._lock:
+                cache[key] = value
+            return value
+
     def text(self, url: str) -> str:
-        return self.request(url)[1]
+        def load() -> str:
+            return self.request(url)[1]
+
+        return self._cached(self._text_cache, url, load)
 
     def request(self, url: str) -> Tuple[str, str]:
         """GET ``url`` and return ``(final_url, body)`` after redirects."""
@@ -197,22 +291,20 @@ class Http:
         return self._with_retries(run, url)
 
     def json(self, url: str) -> Any:
-        if url in self._json_cache:
-            return self._json_cache[url]
+        def load() -> Any:
+            def run() -> str:
+                with self._open(url, accept="application/vnd.github+json, application/json") as response:
+                    raw = response.read()
+                    charset = response.headers.get_content_charset() or "utf-8"
+                return raw.decode(charset, "replace")
 
-        def run() -> str:
-            with self._open(url, accept="application/vnd.github+json, application/json") as response:
-                raw = response.read()
-                charset = response.headers.get_content_charset() or "utf-8"
-            return raw.decode(charset, "replace")
+            body = self._with_retries(run, url)
+            try:
+                return json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise UpdateError(f"invalid JSON from {url}: {exc}") from exc
 
-        body = self._with_retries(run, url)
-        try:
-            parsed = json.loads(body)
-        except json.JSONDecodeError as exc:
-            raise UpdateError(f"invalid JSON from {url}: {exc}") from exc
-        self._json_cache[url] = parsed
-        return parsed
+        return self._cached(self._json_cache, url, load)
 
     def sha256(self, url: str) -> str:
         def run() -> str:
@@ -1192,6 +1284,7 @@ def apply_autoupdate(
     manifest: Dict[str, Any],
     info: VersionInfo,
     allow_download: bool = True,
+    pool: Optional[ThreadPoolExecutor] = None,
 ) -> Dict[str, Any]:
     """Return a new manifest with version-dependent fields rewritten."""
     autoupdate = manifest.get("autoupdate")
@@ -1209,33 +1302,66 @@ def apply_autoupdate(
         else [None]
     )
 
+    # ---- plan the downloads, then resolve every hash at once --------------
+    # Hashing is the only network-bound part of the rewrite and a manifest normally
+    # carries one download per architecture, so the whole set is queued up before any
+    # field is touched. Nothing below mutates ``manifest`` or ``updated``, which keeps
+    # the writes in the second loop single-threaded and deterministic.
+    plans: List[Tuple[Optional[str], Any, List[str], Any]] = []
+    tasks: List[Tuple[int, int, str, Any]] = []
     for arch in archs:
         url_template = _arch_specific(autoupdate, arch, "url")
+        if not url_template:
+            plans.append((arch, None, [], None))
+            continue
+        templates = url_template if isinstance(url_template, list) else [url_template]
+        target_urls = [substitute(t, substitutions) for t in templates]
+        hash_spec = _arch_specific(autoupdate, arch, "hash")
+        if hash_spec is None and isinstance(autoupdate.get("hash"), dict):
+            hash_spec = autoupdate["hash"]
+        specs = hash_spec if isinstance(hash_spec, list) else [hash_spec] * len(target_urls)
+        plans.append((arch, url_template, target_urls, hash_spec))
+        for index, url in enumerate(target_urls):
+            tasks.append((len(plans) - 1, index, url, specs[index] if index < len(specs) else None))
+
+    def digest(task: Tuple[int, int, str, Any]) -> Tuple[int, int, str]:
+        plan_index, url_index, url, spec = task
+        return plan_index, url_index, resolve_hash(http, spec, url, substitutions, allow_download)
+
+    hashes: Dict[Tuple[int, int], str] = {}
+    if pool is not None and len(tasks) > 1:
+        failures: List[Exception] = []
+        for future in [pool.submit(digest, task) for task in tasks]:
+            try:
+                plan_index, url_index, value = future.result()
+            except Exception as exc:  # keep collecting so no worker is left running
+                failures.append(exc)
+                continue
+            hashes[plan_index, url_index] = value
+        if failures:
+            raise failures[0]
+    else:
+        for task in tasks:
+            plan_index, url_index, value = digest(task)
+            hashes[plan_index, url_index] = value
+
+    for plan_index, (arch, url_template, target_urls, hash_spec) in enumerate(plans):
         entry = architecture[arch] if arch is not None else updated
 
         if url_template:
             # A manifest may list several downloads; rewrite every one of them and keep
             # the list shape, otherwise the extra files would be silently dropped.
-            templates = url_template if isinstance(url_template, list) else [url_template]
-            target_urls = [substitute(t, substitutions) for t in templates]
             if isinstance(url_template, list):
                 entry["url"] = target_urls
             else:
                 entry["url"] = target_urls[0]
 
-            hash_spec = _arch_specific(autoupdate, arch, "hash")
-            if hash_spec is None and isinstance(autoupdate.get("hash"), dict):
-                hash_spec = autoupdate["hash"]
-            specs = hash_spec if isinstance(hash_spec, list) else [hash_spec] * len(target_urls)
-            hashes = [
-                resolve_hash(http, specs[i] if i < len(specs) else None, url, substitutions, allow_download)
-                for i, url in enumerate(target_urls)
-            ]
+            resolved = [hashes[plan_index, index] for index in range(len(target_urls))]
             current_hash = entry.get("hash")
             if isinstance(current_hash, list) or isinstance(hash_spec, list):
-                entry["hash"] = hashes
+                entry["hash"] = resolved
             else:
-                entry["hash"] = hashes[0]
+                entry["hash"] = resolved[0]
 
         for key in UPDATABLE_KEYS:
             if _arch_specific(updated, arch, key) is None:
@@ -1303,6 +1429,7 @@ def update_one(
     force: bool = False,
     dry_run: bool = False,
     allow_download: bool = True,
+    pool: Optional[ThreadPoolExecutor] = None,
 ) -> Tuple[str, Optional[str]]:
     """Maintain a single manifest. Returns (status, message)."""
     name = path.stem
@@ -1313,7 +1440,7 @@ def update_one(
     if info.version == current and not force:
         return "current", "already at " + info.version
 
-    updated = apply_autoupdate(http, manifest, info, allow_download=allow_download)
+    updated = apply_autoupdate(http, manifest, info, allow_download=allow_download, pool=pool)
 
     if info.version == current:
         new_ = json.dumps(updated, indent=4, sort_keys=False)
@@ -1377,6 +1504,15 @@ def commit_changes(repo: Path, updated: Sequence[str], push: bool) -> bool:
     return True
 
 
+class Outcome(NamedTuple):
+    """What one worker did with one manifest, plus its buffered log lines."""
+
+    path: Path
+    status: str
+    message: str
+    lines: List[str]
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     _init_stdout()
     parser = argparse.ArgumentParser(
@@ -1388,6 +1524,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("-b", "--bucket", default="bucket", help="bucket directory (default: bucket)")
     parser.add_argument("-n", "--dry-run", action="store_true", help="report only, never write")
     parser.add_argument("-f", "--force", action="store_true", help="recompute even when already up to date")
+    parser.add_argument(
+        "-j", "--jobs", type=int, default=DEFAULT_JOBS,
+        help=f"manifests to update at once, also the cap on parallel HTTP requests (default: {DEFAULT_JOBS})",
+    )
     parser.add_argument("--no-download", action="store_true", help="never download assets to hash locally")
     parser.add_argument("--commit", action="store_true", help="git commit the updated manifests")
     parser.add_argument("--push", action="store_true", help="also git push (implies --commit)")
@@ -1406,7 +1546,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         info("no manifests found")
         return 0
 
-    http = Http(token=args.token, timeout=args.timeout)
+    jobs = max(1, args.jobs)
+    limiter = threading.BoundedSemaphore(jobs) if jobs > 1 else None
     counts = {"updated": 0, "current": 0, "failed": 0}
     updated_files: List[str] = []
 
@@ -1417,31 +1558,64 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             # --bucket pointed outside the repository; absolute paths still work.
             return str(p)
 
-    for path in paths:
-        name = path.stem
-        try:
-            status, message = update_one(
-                http, path, force=args.force, dry_run=args.dry_run, allow_download=not args.no_download
-            )
-        except UpdateError as exc:
-            counts["failed"] += 1
-            error(f"{name}: {exc}")
-            continue
-        except Exception as exc:  # unexpected -- keep going with the other manifests
-            counts["failed"] += 1
-            error(f"{name}: {type(exc).__name__}: {exc}")
-            continue
+    hash_pool: Optional[ThreadPoolExecutor] = (
+        ThreadPoolExecutor(max_workers=jobs, thread_name_prefix="hash") if jobs > 1 else None
+    )
 
+    def work(path: Path) -> Outcome:
+        """Maintain one manifest, buffering its log lines for an atomic report."""
+        with capture_output() as lines:
+            try:
+                status, message = update_one(
+                    Http(token=args.token, timeout=args.timeout, limiter=limiter),
+                    path,
+                    force=args.force,
+                    dry_run=args.dry_run,
+                    allow_download=not args.no_download,
+                    pool=hash_pool,
+                )
+            except UpdateError as exc:
+                return Outcome(path, "failed", str(exc), lines)
+            except Exception as exc:  # unexpected -- keep going with the other manifests
+                return Outcome(path, "failed", f"{type(exc).__name__}: {exc}", lines)
+        return Outcome(path, status, message, lines)
+
+    def report(outcome: Outcome) -> None:
+        status, name = outcome.status, outcome.path.stem
         if status == "updated":
             counts["updated"] += 1
-            ok(f"{name}: {message}")
-            updated_files.append(git_path(path))
+            headline, stream = _c(f"{name}: {outcome.message}", "32"), sys.stdout
+            updated_files.append(git_path(outcome.path))
         elif status == "outdated":
             counts["updated"] += 1
-            warn(f"{name}: {message}")
+            headline, stream = _c(f"warning: {name}: {outcome.message}", "33"), sys.stderr
+        elif status == "failed":
+            counts["failed"] += 1
+            headline, stream = _c(f"error: {name}: {outcome.message}", "31"), sys.stderr
         else:
             counts["current"] += 1
-            info(_c(f"{name}: {message}", "90"))
+            headline, stream = _c(f"{name}: {outcome.message}", "90"), sys.stdout
+        with _PRINT_LOCK:
+            for line in outcome.lines:
+                print(line, flush=True)
+            print(headline, file=stream, flush=True)
+
+    try:
+        if jobs == 1 or len(paths) == 1:
+            for path in paths:
+                report(work(path))
+        else:
+            with ThreadPoolExecutor(max_workers=jobs, thread_name_prefix="manifest") as pool:
+                futures = {pool.submit(work, path): path for path in paths}
+                for future in as_completed(futures):
+                    try:
+                        report(future.result())
+                    except Exception as exc:  # a worker died outside update_one
+                        counts["failed"] += 1
+                        error(f"{futures[future].stem}: {type(exc).__name__}: {exc}")
+    finally:
+        if hash_pool is not None:
+            hash_pool.shutdown(wait=True)
 
     summary = (
         f"\n{counts['updated']} updated, {counts['current']} up to date, {counts['failed']} failed"
