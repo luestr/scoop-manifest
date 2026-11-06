@@ -1,5 +1,5 @@
 {
-    "version": "8.0.3.5587",
+    "version": "8.0.5595",
     "description": "System-wide ad blocker, tracker filter and privacy guard for Windows",
     "homepage": "https://adguard.com/",
     "license": "GPL-3.0-only",
@@ -11,8 +11,8 @@
     "depends": "7zip",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/AdguardTeam/AdguardForWindows/releases/download/v8.0.3/AdGuard-8.0.3.5587.exe",
-            "hash": "7f499a0e196f9b09ee1a2d87c98e418e6b44caa381cfa4ea29ed9d9d48b54949"
+            "url": "https://github.com/AdguardTeam/AdguardForWindows/releases/download/v8.0.4/AdGuard-8.0.5595.exe",
+            "hash": "37287b28a7742d954a62577d7b434aba3bd900ccb782ea8f235a5556fb742fbe"
         }
     },
     "pre_install": [
