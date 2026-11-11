@@ -1,0 +1,8 @@
+*.sublime-workspace
+*~
+._*
+page.html
+checkver-*.html
+# 维护工具的配置含有推送 token，不应出现在本仓库。
+scoop_maintainer.toml
+scoop_maintainer.json

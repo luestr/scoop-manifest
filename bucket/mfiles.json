@@ -1,0 +1,36 @@
+{
+    "version": "2.8.3",
+    "description": "Transfer files, sync the clipboard and manage files between a PC and phones or Macs over the local network",
+    "homepage": "https://mfiles.maokebing.com/",
+    "license": "Proprietary",
+    "notes": [
+        "This is the vendor's portable 'green' build: it unpacks into the Scoop app directory and runs without an installer or administrator rights.",
+        "The archive ships helper batch files ('添加右健菜单支持.bat', '添加开机启动.bat' and their removal counterparts) that register an Explorer context-menu shell extension under HKCR and a run-at-login entry under HKCU. They are not executed during install; run them yourself from the app directory if you want those integrations.",
+        "Requires the .NET Framework 4.0 runtime, which ships with Windows 10 and 11."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://mfiles.maokebing.com/package/mfiles-helper-2.8.3-x64-dotnet40-green.zip",
+            "hash": "7465da5d59b8bc527e097adf7f8600383b0946f4652c0316d3eb51d5207d57e5"
+        }
+    },
+    "extract_dir": "MFiles",
+    "bin": "MFiles.exe",
+    "shortcuts": [
+        [
+            "MFiles.exe",
+            "爱传送"
+        ]
+    ],
+    "checkver": {
+        "url": "https://mfiles.maokebing.com/",
+        "regex": "mfiles-helper-([\\d.]+)-x64-dotnet40-green\\.zip"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://mfiles.maokebing.com/package/mfiles-helper-$version-x64-dotnet40-green.zip"
+            }
+        }
+    }
+}

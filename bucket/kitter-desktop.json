@@ -1,0 +1,26 @@
+{
+    "version": "0.2.6",
+    "description": "A simple, lightweight skill manager built in Rust",
+    "homepage": "https://github.com/what1f/kitter",
+    "license": "Apache-2.0",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/what1f/kitter/releases/download/v0.2.6/Kitter-0.2.6-desktop-windows-x86_64.exe#/Kitter.exe",
+            "hash": "3875fbbc8117ff8e31cee22be28e977683278c92d5b7b68bea43f3a31bf8de93"
+        }
+    },
+    "shortcuts": [
+        [
+            "Kitter.exe",
+            "Kitter"
+        ]
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/what1f/kitter/releases/download/v$version/Kitter-$version-desktop-windows-x86_64.exe#/Kitter.exe"
+            }
+        }
+    }
+}

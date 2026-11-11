@@ -1,0 +1,46 @@
+{
+    "version": "2.3.2",
+    "description": "Find and unlock files stuck in 'File in Use' or 'Access Denied' on Windows",
+    "homepage": "https://github.com/kuy124/UnBlock",
+    "license": "MIT",
+    "notes": [
+        "This build is compiled from the C# sources shipped in the vendor's archive instead of running its installer: the installer requires administrator rights, writes HKLM context-menu verbs and registers a boot-time watcher (a 'UnBlockWatcher' Run value plus an 'UnBlock-Cleanup' logon scheduled task). None of that happens here.",
+        "The archive's own installer ('setup.exe') and its sources are removed after the build, so the only thing left is a plain 'Unlocker.exe' that runs entirely from the Scoop directory.",
+        "Because no context-menu verbs are registered, launch 'UnBlock' from the shortcut (or 'Unlocker.exe <path>' from a shell) to inspect a stuck file."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/kuy124/UnBlock/releases/download/2.3.2/UnBlock.Installer.2.3.2.zip",
+            "hash": "940a8a0c26a76c9b0109c97c25e9a03bc18ee5f1b023140deff7cf485def1233"
+        }
+    },
+    "pre_install": [
+        "$csc = Join-Path $env:SystemRoot 'Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe'",
+        "if (!(Test-Path $csc)) { $csc = Join-Path $env:SystemRoot 'Microsoft.NET\\Framework\\v4.0.30319\\csc.exe' }",
+        "if (!(Test-Path $csc)) { throw 'csc.exe (.NET Framework 4.x) not found; it is required to compile UnBlock from source.' }",
+        "$src = Get-ChildItem -Path \"$dir\\src\\*.cs\" | Where-Object { $_.Name -ne 'Setup.cs' } | Select-Object -ExpandProperty FullName",
+        "if (!$src) { throw 'UnBlock sources (src\\*.cs) were not found in the archive.' }",
+        "& $csc /nologo /target:winexe /optimize+ \"/out:$dir\\Unlocker.exe\" /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Management.dll /r:System.Runtime.Serialization.dll /r:System.Xml.dll $src | Out-Null",
+        "if ($LASTEXITCODE -ne 0 -or !(Test-Path \"$dir\\Unlocker.exe\")) { throw \"Failed to compile UnBlock from source (csc exit code $LASTEXITCODE).\" }",
+        "Remove-Item \"$dir\\setup.exe\" -Force -ErrorAction SilentlyContinue",
+        "Remove-Item \"$dir\\src\" -Recurse -Force -ErrorAction SilentlyContinue"
+    ],
+    "bin": "Unlocker.exe",
+    "shortcuts": [
+        [
+            "Unlocker.exe",
+            "UnBlock"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/kuy124/UnBlock/releases.atom",
+        "regex": "/releases/tag/([\\d.]+)\""
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/kuy124/UnBlock/releases/download/$version/UnBlock.Installer.$version.zip"
+            }
+        }
+    }
+}

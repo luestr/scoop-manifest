@@ -1,0 +1,54 @@
+{
+    "version": "0.5.6",
+    "description": "Lightweight clipboard manager built with Rust and GPUI",
+    "homepage": "https://clippi.rains-ailurus.cn/",
+    "license": "MIT",
+    "notes": "Clippi keeps its settings, history database and cached images in '%APPDATA%\\Clippi', not in the install directory, so 'scoop uninstall' leaves your data in place. Auto-start and the built-in update check are disabled in clippi.toml by default; upgrade with 'scoop update clippi-desktop' instead of the in-app updater. Press Alt+V to open the clipboard panel.",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Ruszero01/clippi/releases/download/v0.5.6/clippi-x86_64-pc-windows-msvc.zip",
+            "hash": "61aba061ac46b97dfab75d9147c99ad85d35ef1baa79ea2b00a90e7b75f866c9"
+        }
+    },
+    "post_install": [
+        "$cfgDir = Join-Path $env:APPDATA 'Clippi'",
+        "$cfg = Join-Path $cfgDir 'clippi.toml'",
+        "if (-not (Test-Path $cfg)) {",
+        "    New-Item -ItemType Directory -Path $cfgDir -Force | Out-Null",
+        "    $toml = @(",
+        "        'theme = \"system\"',",
+        "        'hotkey = \"Alt+V\"',",
+        "        'auto_start = false',",
+        "        'auto_hide = true',",
+        "        'db_path = \"\"',",
+        "        'sort_by_created = false',",
+        "        'window_position_mode = \"center\"',",
+        "        'saved_window_x = -1',",
+        "        'saved_window_y = -1',",
+        "        'card_height_mode = \"auto\"',",
+        "        'auto_check_updates = false'",
+        "    ) -join \"`r`n\"",
+        "    [System.IO.File]::WriteAllText($cfg, $toml + \"`r`n\", (New-Object System.Text.UTF8Encoding($false)))",
+        "} elseif ((Get-Content $cfg -Raw) -match '(?m)^\\s*auto_check_updates\\s*=\\s*true') {",
+        "    $toml = (Get-Content $cfg -Raw) -replace '(?m)^\\s*auto_check_updates\\s*=\\s*true', 'auto_check_updates = false'",
+        "    [System.IO.File]::WriteAllText($cfg, $toml, (New-Object System.Text.UTF8Encoding($false)))",
+        "}"
+    ],
+    "shortcuts": [
+        [
+            "clippi.exe",
+            "Clippi Desktop"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/Ruszero01/clippi/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/Ruszero01/clippi/releases/download/v$version/clippi-x86_64-pc-windows-msvc.zip"
+            }
+        }
+    }
+}

@@ -1,0 +1,34 @@
+{
+    "version": "0.1.0-alpha.7",
+    "description": "A fast native mail client with instant startup and a small memory footprint",
+    "homepage": "https://flectar.com/mail/",
+    "license": "AGPL-3.0-only",
+    "notes": [
+        "This is an early alpha build: back up anything you keep in it before upgrading.",
+        "The vendor's portable ZIP is used as-is. Flectar Mail stores its mailboxes and settings in '%APPDATA%\\flectar-mail', not in the install directory, so your mail survives 'scoop update' and 'scoop uninstall'.",
+        "There is no self-updater and no run-at-login hook in this build, so nothing is registered with Windows startup and nothing will replace the Scoop-managed files. Update with 'scoop update flectar-mail'."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/flectar/mail/releases/download/v0.1.0-alpha.7/flectar-mail-0.1.0-alpha.7-windows-x64.zip",
+            "hash": "37d0366f3c20235097c7b59b733c347002e092b78c8b499b90e018c67282cc1a"
+        }
+    },
+    "shortcuts": [
+        [
+            "flectar-mail.exe",
+            "Flectar Mail"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/flectar/mail/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+-alpha\\.\\d+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/flectar/mail/releases/download/v$version/flectar-mail-$version-windows-x64.zip"
+            }
+        }
+    }
+}

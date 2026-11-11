@@ -1,0 +1,64 @@
+{
+    "version": "2.2.0",
+    "description": "Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base",
+    "homepage": "https://cherry-ai.com",
+    "license": "AGPL-3.0-only",
+    "notes": [
+        "The vendor's NSIS installer is unpacked during install instead of being run, so the payload is laid out once and the app starts directly from the Scoop directory.",
+        "User data lives in the persisted 'data' folder and survives updates. The built-in updater is inactive in this layout, so update Cherry Studio with 'scoop update cherry-studio'."
+    ],
+    "depends": "7zip",
+    "suggest": {
+        "vcredist": "extras/vcredist2022"
+    },
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.2.0/Cherry-Studio-2.2.0-win-x64-setup.exe",
+            "hash": "51eb2fc733742b101605ccca85abaf518c2572078f3c3cac491f812f9b372a97"
+        },
+        "arm64": {
+            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.2.0/Cherry-Studio-2.2.0-win-arm64-setup.exe",
+            "hash": "24b27c16724656b31eb3381ca9ae9df40d93155ea69af933748d5986a60fc929"
+        }
+    },
+    "pre_install": [
+        "$wrapper = Get-Item \"$dir\\$fname\"",
+        "$stage = Join-Path $env:TEMP (\"cherry-studio-\" + $PID)",
+        "try {",
+        "    if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "    New-Item -ItemType Directory -Path $stage | Out-Null",
+        "    & 7z e $wrapper.FullName -ir!'app-*.7z' -o\"$stage\" -y | Out-Null",
+        "    if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the NSIS installer (7z exit code $LASTEXITCODE).\" }",
+        "    $inner = Get-ChildItem -Path $stage -Filter 'app-*.7z' | Select-Object -First 1",
+        "    if ($null -eq $inner) { throw 'Inner app archive (app-*.7z) not found inside the NSIS installer' }",
+        "    & 7z x $inner.FullName -o\"$dir\" -y | Out-Null",
+        "    if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the inner app archive (7z exit code $LASTEXITCODE).\" }",
+        "} finally {",
+        "    if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "}",
+        "Remove-Item -Force $wrapper.FullName"
+    ],
+    "env_set": {
+        "PORTABLE_EXECUTABLE_DIR": "$dir"
+    },
+    "shortcuts": [
+        [
+            "Cherry Studio.exe",
+            "Cherry Studio"
+        ]
+    ],
+    "persist": "data",
+    "checkver": {
+        "github": "https://github.com/CherryHQ/cherry-studio"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v$version/Cherry-Studio-$version-win-x64-setup.exe"
+            },
+            "arm64": {
+                "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v$version/Cherry-Studio-$version-win-arm64-setup.exe"
+            }
+        }
+    }
+}

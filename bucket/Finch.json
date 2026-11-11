@@ -1,0 +1,49 @@
+{
+    "version": "1.8.0",
+    "description": "An agent client for local execution, memory and desktop workflows",
+    "homepage": "https://www.finchwork.app",
+    "license": "Proprietary",
+    "notes": [
+        "The vendor's NSIS installer is unpacked during install instead of being run, so the payload is laid out once and the app starts directly from the Scoop directory. Finch never registers a run-at-login entry, so nothing is added to Windows startup.",
+        "The built-in updater is neutralised: 'resources\\app-update.yml' is rewritten to a dead feed during install, so the periodic background check cannot download or install anything. Update Finch with 'scoop update finch'."
+    ],
+    "depends": "7zip",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/finchtoys/finch-releases/releases/download/v1.8.0/Finch-1.8.0-setup-x64.exe",
+            "hash": "2352f855a08142fd4c4ca20078b94c9db5170f9ca7c9c13301deff4924939aeb"
+        }
+    },
+    "pre_install": [
+        "$wrapper = Get-Item \"$dir\\$fname\"",
+        "$stage = Join-Path $env:TEMP ('finch-' + $PID)",
+        "if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }",
+        "New-Item -ItemType Directory -Path $stage | Out-Null",
+        "& 7z e $wrapper.FullName \"-o$stage\" -y '$PLUGINSDIR/app-64.7z' | Out-Null",
+        "if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the NSIS installer (7z exit code $LASTEXITCODE).\" }",
+        "$inner = Join-Path $stage 'app-64.7z'",
+        "if (!(Test-Path $inner)) { throw 'Inner app archive (app-64.7z) not found inside the NSIS installer' }",
+        "& 7z x $inner \"-o$dir\" -y | Out-Null",
+        "if ($LASTEXITCODE -gt 1) { throw \"Failed to unpack the inner app archive (7z exit code $LASTEXITCODE).\" }",
+        "Remove-Item -Recurse -Force $stage",
+        "Remove-Item -Force $wrapper.FullName",
+        "Set-Content -Path (Join-Path $dir 'resources\\app-update.yml') -Value @('provider: generic', 'url: http://127.0.0.1:9/releases', 'updaterCacheDirName: finch-desktop-updater') -Encoding ascii"
+    ],
+    "shortcuts": [
+        [
+            "Finch.exe",
+            "Finch"
+        ]
+    ],
+    "checkver": {
+        "url": "https://github.com/finchtoys/finch-releases/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/finchtoys/finch-releases/releases/download/v$version/Finch-$version-setup-x64.exe"
+            }
+        }
+    }
+}

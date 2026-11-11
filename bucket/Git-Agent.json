@@ -1,0 +1,43 @@
+{
+    "version": "2.2.3",
+    "description": "A native desktop Git client for reviewing changes, browsing history and resolving conflicts",
+    "homepage": "https://git-agent.emssion.com",
+    "license": {
+        "identifier": "Apache-2.0",
+        "url": "https://github.com/adoin/git-Agent/blob/main/LICENSE"
+    },
+    "notes": [
+        "The vendor's Inno Setup installer is unpacked instead of being run, so nothing is installed outside the Scoop directory and no Start Menu or desktop entry is created by the installer.",
+        "Settings, repositories, stashes and logs live in 'data' next to the executable, which Scoop persists, so they survive updates.",
+        "On first install 'data\\config.json' is seeded with 'auto_check_updates: false'. Git Agent has no run-at-login feature and never writes a Windows startup entry, so nothing is added to autostart. Update with 'scoop update git-agent'."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/adoin/git-Agent/releases/download/v2.2.3/GitAgentSetup-v2.2.3.exe",
+            "hash": "9043c46035f92ec2f6182cef07cbe7b7705f8d6c35b1b2e4d43b9173ce9a57e5"
+        }
+    },
+    "innosetup": true,
+    "pre_install": [
+        "if (!(Test-Path \"$dir\\data\")) { New-Item -ItemType Directory -Path \"$dir\\data\" | Out-Null }",
+        "if (!(Test-Path \"$dir\\data\\config.json\")) { Set-Content -Path \"$dir\\data\\config.json\" -Value '{ \"auto_check_updates\": false }' -Encoding utf8NoBOM }"
+    ],
+    "shortcuts": [
+        [
+            "git-agent.exe",
+            "Git Agent"
+        ]
+    ],
+    "persist": "data",
+    "checkver": {
+        "url": "https://github.com/adoin/git-Agent/releases.atom",
+        "regex": "/releases/tag/v([\\d.]+)\""
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/adoin/git-Agent/releases/download/v$version/GitAgentSetup-v$version.exe"
+            }
+        }
+    }
+}
