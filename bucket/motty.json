@@ -1,0 +1,56 @@
+{
+    "version": "0.3.9",
+    "description": "SSH client with terminal, SFTP, port forwarding and an AI assistant",
+    "homepage": "https://motty.page/",
+    "license": "Apache-2.0",
+    "notes": [
+        "The portable ZIP is used as-is. While 'motty-data' sits next to 'motty.exe', hosts, keys, settings and the password vault stay in that folder, which Scoop persists across updates.",
+        "'motty-data' is also what makes this copy portable: you can copy 'motty.exe' and the folder together. A copy under 'scoop\\apps' is recognised as managed by Scoop, so Motty never installs an update over it; update with 'scoop update motty'.",
+        "No startup entry is created: Motty only registers 'Start at login' when that switch is turned on in its settings, and 'scoop uninstall' removes any run entry that points into the Scoop directory.",
+        "The automatic update check is Motty's own setting, stored in 'motty-data\\config.db' and enabled by default; it only looks up the newest release and never installs it. Turn off 'Check automatically' in Settings to stop the hourly lookup."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/t8y2/motty/releases/download/v0.3.9/motty-0.3.9-windows-amd64.zip",
+            "hash": "0f74486b309625981895e3c886ad7b0eae70ecfb3c5bf357a58e37b213e10815"
+        },
+        "arm64": {
+            "url": "https://github.com/t8y2/motty/releases/download/v0.3.9/motty-0.3.9-windows-arm64.zip",
+            "hash": "a9d3f266787bcdef0a11cfb82d965543924c3df3c95ec1eb94144e35d00eb78f"
+        }
+    },
+    "shortcuts": [
+        [
+            "motty.exe",
+            "Motty"
+        ]
+    ],
+    "persist": "motty-data",
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": {
+        "github": "https://github.com/t8y2/motty"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/t8y2/motty/releases/download/v$version/motty-$version-windows-amd64.zip"
+            },
+            "arm64": {
+                "url": "https://github.com/t8y2/motty/releases/download/v$version/motty-$version-windows-arm64.zip"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/t8y2/motty/releases/download/v$version/SHA256SUMS",
+            "find": "$basename"
+        }
+    }
+}

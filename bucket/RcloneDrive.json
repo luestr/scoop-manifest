@@ -1,0 +1,59 @@
+{
+    "version": "0.2.4",
+    "description": "Mount cloud storage as a local drive through rclone",
+    "homepage": "https://github.com/younland/RcloneDrive",
+    "license": "MIT",
+    "notes": [
+        "The vendor NSIS installer is run silently into the Scoop directory. It is marked 'requireAdministrator' because it can install the bundled WinFsp driver, so 'scoop install' shows a UAC prompt; its Start Menu shortcut and 'Uninstall.exe' are removed afterwards, and Scoop owns the files.",
+        "WinFsp is required for mounting a drive. The installer installs it when it is missing, which is why it asks for elevation; declining the UAC prompt aborts the install and leaves no working copy.",
+        "RcloneDrive keeps its settings in rclone's own configuration directory. 'Auto update' is off by default and 'Launch at login' is off until switched on, so neither the installer nor the first run adds a startup entry or checks for releases. 'scoop uninstall' also removes any run entry that points into the Scoop directory.",
+        "Update with 'scoop update RcloneDrive'; the vendor's own updater stays off unless 'Auto update' is turned on in the app's settings."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/younland/RcloneDrive/releases/download/v0.2.4/RcloneDrive-0.2.4-windows-amd64-setup.exe",
+            "hash": "a83f792b208e55de2d64408387a977fbabf5703f3048da54aa02cbaf87837763"
+        }
+    },
+    "installer": {
+        "script": [
+            "$installer = \"$dir\\$fname\"",
+            "$process = Start-Process -FilePath $installer -ArgumentList @('/S', \"/D=$dir\") -Verb RunAs -Wait -PassThru",
+            "if ($process.ExitCode -ne 0) { throw \"RcloneDrive setup failed with exit code $($process.ExitCode).\" }"
+        ]
+    },
+    "post_install": [
+        "Get-ChildItem -LiteralPath $dir -Filter '*-setup.exe' | Remove-Item -Force -ErrorAction SilentlyContinue",
+        "Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Programs')) 'RcloneDrive.lnk') -Force -ErrorAction SilentlyContinue",
+        "Remove-Item -LiteralPath \"$dir\\Uninstall.exe\" -Force -ErrorAction SilentlyContinue",
+        "$uninstallRoot = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall'",
+        "Get-ChildItem -LiteralPath $uninstallRoot -ErrorAction SilentlyContinue | ForEach-Object {",
+        "    $entry = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction SilentlyContinue",
+        "    if ($entry.InstallLocation -and ($entry.InstallLocation.TrimEnd('\\') -eq $original_dir.TrimEnd('\\'))) { Remove-Item -LiteralPath $_.PSPath -Recurse -Force -ErrorAction SilentlyContinue }",
+        "}"
+    ],
+    "shortcuts": [
+        [
+            "RcloneDrive.exe",
+            "RcloneDrive"
+        ]
+    ],
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/younland/RcloneDrive/releases/download/v$version/RcloneDrive-$version-windows-amd64-setup.exe"
+            }
+        }
+    }
+}

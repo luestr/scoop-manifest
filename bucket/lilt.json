@@ -1,0 +1,60 @@
+{
+    "version": "0.4.3",
+    "description": "Third-party QQ Music client with a native interface, player and desktop lyrics",
+    "homepage": "https://github.com/Amamiya23/mygo-qyin",
+    "license": "AGPL-3.0-only",
+    "notes": [
+        "The vendor tarball is used as-is: 'Lilt.exe', its icon and the licence files, no installer and no unpack step.",
+        "Settings, the login session and the play cache live in '%APPDATA%\\Lilt'. 'updater.json' is seeded with 'automaticChecks: false' on install, so the app never checks for updates in the background; update with 'scoop update lilt'.",
+        "No startup entry is registered by the manifest, by the archive or on first run. 'scoop uninstall' also removes any run entry that points into the Scoop directory."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v0.4.3/lilt-0.4.3-windows-amd64.tar.gz",
+            "hash": "78591e41341fefbc2acc7dc6e0f49805f9fb4c4af03f9d4206e9bb9a2f27733a"
+        },
+        "arm64": {
+            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v0.4.3/lilt-0.4.3-windows-arm64.tar.gz",
+            "hash": "92dd1e0c2ccdde45ca09118b72442a2c34f659be8f5bb00542d7d27096d3930b"
+        }
+    },
+    "post_install": [
+        "$configDir = Join-Path $env:APPDATA 'Lilt'",
+        "$updater = Join-Path $configDir 'updater.json'",
+        "if (!(Test-Path -LiteralPath $updater)) {",
+        "    New-Item -ItemType Directory -Path $configDir -Force | Out-Null",
+        "    [System.IO.File]::WriteAllText($updater, '{\"automaticChecks\": false}', (New-Object System.Text.UTF8Encoding($false)))",
+        "}"
+    ],
+    "shortcuts": [
+        [
+            "Lilt.exe",
+            "Lilt"
+        ]
+    ],
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v$version/lilt-$version-windows-amd64.tar.gz"
+            },
+            "arm64": {
+                "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v$version/lilt-$version-windows-arm64.tar.gz"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v$version/SHA256SUMS",
+            "find": "$basename"
+        }
+    }
+}

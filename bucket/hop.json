@@ -1,0 +1,46 @@
+{
+    "version": "0.4.21",
+    "description": "Native proxy client for mihomo (Clash.Meta) with TUN, rules and subscriptions",
+    "homepage": "https://github.com/marukolibro/Hop",
+    "license": "GPL-3.0-only",
+    "notes": [
+        "The vendor tarball is used as-is: 'Hop.exe', the bundled mihomo core and helper under 'bin', and the rule databases under 'geodata'.",
+        "Settings, subscriptions, logs and the core's cache live in '%APPDATA%\\hop'. 'Launch at login' is off by default and only writes a run entry when it is switched on; 'scoop uninstall' removes any run entry that points into the Scoop directory.",
+        "Hop checks GitHub for a newer release when it starts and every six hours after that, and shows it in the dashboard. It has no setting to turn that check off and never installs a release without confirmation; updates installed by Scoop replace the files.",
+        "Enabling TUN starts Hop's privileged helper, which is installed separately and needs administrator rights."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/marukolibro/Hop/releases/download/v0.4.21/hop-0.4.21-windows-amd64.tar.gz",
+            "hash": "c42869a576ecdf79fdb0b675587de83dddc2124167b5a78948d1ff584b5af9e4"
+        }
+    },
+    "shortcuts": [
+        [
+            "Hop.exe",
+            "Hop"
+        ]
+    ],
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/marukolibro/Hop/releases/download/v$version/hop-$version-windows-amd64.tar.gz"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/marukolibro/Hop/releases/download/v$version/SHA256SUMS",
+            "find": "$basename"
+        }
+    }
+}

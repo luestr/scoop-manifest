@@ -1,0 +1,79 @@
+{
+    "version": "1.34.0",
+    "description": "Open-source IMAP/SMTP email client with an AI assistant",
+    "homepage": "https://godwit.email/",
+    "license": "Apache-2.0",
+    "notes": [
+        "The vendor NSIS installer is run silently into the Scoop directory. Its own uninstaller, Start Menu shortcut and 'Apps & features' entry are removed after install, so Scoop owns the files and no vendor entry is left behind.",
+        "Mail, accounts and settings live in '%APPDATA%\\Godwit'. 'updater.json' is seeded with 'automaticChecks: false' on install, so the app never looks for a new release in the background; update with 'scoop update godwit'.",
+        "No startup entry is created by the installer or on first run. 'scoop uninstall' also removes any run entry that points into the Scoop directory.",
+        "The installer is fetched through 'https://godwit.email/download/windows-amd64', whose redirect names the versioned file on 'dl.godwit.email'."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://dl.godwit.email/godwit-setup-1.34.0-amd64.exe",
+            "hash": "84856a1ca62507fa16de1ed37a48c8567a34cb96885d89543b9892c5d79a629f"
+        },
+        "arm64": {
+            "url": "https://dl.godwit.email/godwit-setup-1.34.0-arm64.exe",
+            "hash": "b50c788301babc9e241129f4ef240a8065285c493cdbea3f63af65db79efd56e"
+        }
+    },
+    "installer": {
+        "args": [
+            "/S",
+            "/D=$dir"
+        ]
+    },
+    "post_install": [
+        "$configDir = Join-Path $env:APPDATA 'Godwit'",
+        "$updater = Join-Path $configDir 'updater.json'",
+        "if (!(Test-Path -LiteralPath $updater)) {",
+        "    New-Item -ItemType Directory -Path $configDir -Force | Out-Null",
+        "    [System.IO.File]::WriteAllText($updater, '{\"automaticChecks\": false}', (New-Object System.Text.UTF8Encoding($false)))",
+        "}",
+        "Remove-Item -LiteralPath (Join-Path ([Environment]::GetFolderPath('Programs')) 'Godwit.lnk') -Force -ErrorAction SilentlyContinue",
+        "Remove-Item -LiteralPath \"$dir\\Uninstall.exe\" -Force -ErrorAction SilentlyContinue",
+        "Remove-Item -LiteralPath 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\email.godwit.app' -Recurse -Force -ErrorAction SilentlyContinue"
+    ],
+    "shortcuts": [
+        [
+            "Godwit.exe",
+            "Godwit"
+        ]
+    ],
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": {
+        "script": [
+            "$request = [System.Net.WebRequest]::Create('https://godwit.email/download/windows-amd64')",
+            "$request.Method = 'HEAD'",
+            "$request.AllowAutoRedirect = $false",
+            "try { $response = $request.GetResponse() } catch { $response = $_.Exception.Response }",
+            "$response.Headers['Location']"
+        ],
+        "regex": "godwit-setup-([\\d.]+)-amd64\\.exe"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://dl.godwit.email/godwit-setup-$version-amd64.exe"
+            },
+            "arm64": {
+                "url": "https://dl.godwit.email/godwit-setup-$version-arm64.exe"
+            }
+        },
+        "hash": {
+            "url": "https://dl.godwit.email/SHA256SUMS",
+            "find": "$basename"
+        }
+    }
+}

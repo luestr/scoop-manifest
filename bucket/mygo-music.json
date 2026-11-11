@@ -1,0 +1,60 @@
+{
+    "version": "0.1.22",
+    "description": "Native music player for local files and streaming services, extended with plugins",
+    "homepage": "https://github.com/egoist/mygo-music",
+    "license": "AGPL-3.0-only",
+    "notes": [
+        "The vendor tarball is used as-is: 'MyGo Music.exe' and its icon, no installer and no unpack step.",
+        "Settings, the library index and plugin state live in '%APPDATA%\\MyGo Music'. 'updater.json' is seeded with 'automaticChecks: false' on install, so the app never checks for updates in the background; update with 'scoop update mygo-music'.",
+        "No startup entry is registered by the manifest, by the archive or on first run. 'scoop uninstall' also removes any run entry that points into the Scoop directory."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/egoist/mygo-music/releases/download/v0.1.22/mygo-music-0.1.22-windows-amd64.tar.gz",
+            "hash": "240e602f10d68e684500d5203c5483ef75ba0c38feb3234e341fdff292ce0061"
+        },
+        "arm64": {
+            "url": "https://github.com/egoist/mygo-music/releases/download/v0.1.22/mygo-music-0.1.22-windows-arm64.tar.gz",
+            "hash": "63fad91be83e5b491b75be7b188b26383f41013a2c4a458750cbd7604ee60ded"
+        }
+    },
+    "post_install": [
+        "$configDir = Join-Path $env:APPDATA 'MyGo Music'",
+        "$updater = Join-Path $configDir 'updater.json'",
+        "if (!(Test-Path -LiteralPath $updater)) {",
+        "    New-Item -ItemType Directory -Path $configDir -Force | Out-Null",
+        "    [System.IO.File]::WriteAllText($updater, '{\"automaticChecks\": false}', (New-Object System.Text.UTF8Encoding($false)))",
+        "}"
+    ],
+    "shortcuts": [
+        [
+            "MyGo Music.exe",
+            "MyGo Music"
+        ]
+    ],
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/egoist/mygo-music/releases/download/v$version/mygo-music-$version-windows-amd64.tar.gz"
+            },
+            "arm64": {
+                "url": "https://github.com/egoist/mygo-music/releases/download/v$version/mygo-music-$version-windows-arm64.tar.gz"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/egoist/mygo-music/releases/download/v$version/SHA256SUMS",
+            "find": "$basename"
+        }
+    }
+}

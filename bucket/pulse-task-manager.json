@@ -1,0 +1,59 @@
+{
+    "version": "0.1.29",
+    "description": "Live system monitor for processes, CPU, GPU, memory, disks, network and energy",
+    "homepage": "https://pulse.egoist.dev/",
+    "license": "Proprietary",
+    "notes": [
+        "The vendor tarball is used as-is: 'Pulse.exe' plus its icon, with no installer and no unpack step.",
+        "Pulse keeps its settings in '%APPDATA%\\Pulse'. 'updater.json' is seeded with 'automaticChecks: false' on install, so the app never looks for a new release in the background; update with 'scoop update pulse-task-manager'.",
+        "No startup entry is registered by the manifest, by the archive or on first run. 'scoop uninstall' also removes any run entry that points into the Scoop directory.",
+        "A tray icon and the optional menu bar extras are Pulse's own settings; none of them start an updater or a login item by itself."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/egoist/pulse-feedback/releases/download/v0.1.29/pulse-0.1.29-windows-amd64.tar.gz",
+            "hash": "e7c1e2d179f7edf93ecae5f0fff716a2e5ad3df89823fcedb73b88bd58a74e9f"
+        },
+        "arm64": {
+            "url": "https://github.com/egoist/pulse-feedback/releases/download/v0.1.29/pulse-0.1.29-windows-arm64.tar.gz",
+            "hash": "b6aba9d5cc2a29ca042e8de23f220619b705b5090f2c2190fa30b52667da1470"
+        }
+    },
+    "post_install": [
+        "$configDir = Join-Path $env:APPDATA 'Pulse'",
+        "$updater = Join-Path $configDir 'updater.json'",
+        "if (!(Test-Path -LiteralPath $updater)) {",
+        "    New-Item -ItemType Directory -Path $configDir -Force | Out-Null",
+        "    [System.IO.File]::WriteAllText($updater, '{\"automaticChecks\": false}', (New-Object System.Text.UTF8Encoding($false)))",
+        "}"
+    ],
+    "shortcuts": [
+        [
+            "Pulse.exe",
+            "Pulse"
+        ]
+    ],
+    "post_uninstall": [
+        "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
+        "$key = Get-Item -LiteralPath $runKey -ErrorAction SilentlyContinue",
+        "if ($key) {",
+        "    foreach ($name in $key.Property) {",
+        "        $value = Get-ItemPropertyValue -LiteralPath $runKey -Name $name -ErrorAction SilentlyContinue",
+        "        if ($value -like \"*\\apps\\$app\\*\") { Remove-ItemProperty -LiteralPath $runKey -Name $name -Force -ErrorAction SilentlyContinue }",
+        "    }",
+        "}"
+    ],
+    "checkver": {
+        "github": "https://github.com/egoist/pulse-feedback"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/egoist/pulse-feedback/releases/download/v$version/pulse-$version-windows-amd64.tar.gz"
+            },
+            "arm64": {
+                "url": "https://github.com/egoist/pulse-feedback/releases/download/v$version/pulse-$version-windows-arm64.tar.gz"
+            }
+        }
+    }
+}
