@@ -17,15 +17,23 @@ scoop install luestr/<app>
 | `Adguard` | System-wide ad blocker, tracker filter and privacy guard for Windows |
 | `cherry-studio` | Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base |
 | `Clippi-Desktop` | A lightweight clipboard manager built with Rust and GPUI |
+| `deckle` | Fast native Markdown editor and notes workspace |
 | `Finch` | An agent client for local execution, memory and desktop workflows |
 | `Flectar-Mail` | A fast native mail client with instant startup and a small memory footprint |
 | `Git-Agent` | A native desktop Git client for reviewing changes, browsing history and resolving conflicts |
 | `github-stars-manager` | AI-powered manager for GitHub starred repositories with semantic search, auto-categorization and release tracking |
+| `godwit` | Open-source IMAP/SMTP email client with an AI assistant |
 | `grit` | Reimplementing Git in Rust (CLI) |
+| `hop` | Native proxy client for mihomo (Clash.Meta) with TUN, rules and subscriptions |
 | `JCode-Desktop` | Native spatial desktop client for Jcode, a coding agent driven by Claude or ChatGPT subscriptions |
 | `kitter-desktop` | A simple, lightweight skill manager built in Rust |
+| `lilt` | Third-party QQ Music client with a native interface, player and desktop lyrics |
 | `mfiles` | Transfer files, sync the clipboard and manage files between a PC and phones or Macs over the local network |
+| `motty` | SSH client with terminal, SFTP, port forwarding and an AI assistant |
+| `mygo-music` | Native music player for local files and streaming services, extended with plugins |
 | `Pulse` | A modern file manager for Windows with tabs, search, previews and shell integration |
+| `pulse-task-manager` | Live system monitor for processes, CPU, GPU, memory, disks, network and energy |
+| `RcloneDrive` | Mount cloud storage as a local drive through rclone |
 | `sniffy-desktop` | An open-source traffic capture and debugging proxy for HTTP/HTTPS, WebSocket, gRPC and SSE |
 | `tty7-Desktop` | A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents |
 | `tty7-Desktop-nightly` | A terminal workbench in pure Rust (nightly build) |

@@ -53,7 +53,7 @@
         ]
     ],
     "checkver": {
-        "url": "https://github.com/1jehuang/jcode-desktop/releases.atom",
+        "url": "https://github.com/1jehuang/jcode-desktop/releases/latest",
         "regex": "/releases/tag/desktop-v([\\d.]+)\""
     },
     "autoupdate": {

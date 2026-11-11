@@ -7,12 +7,13 @@
         "Unpacks the official installer payload into the app folder and keeps the vendor layout: launcher and 'GameViewerService.exe' at the root, the rest of the program in 'bin'. No Run entry and no 'Upgrade.exe' self-updater are installed.",
         "Registers 'GameViewerService' as a manual-start service: it does not start at boot, but the app starts it on launch. The main window needs this service.",
         "The UU virtual display driver is installed with the bundled 'devcon.exe' (device 'Root\\GameViewerIddDriver'); this needs administrator rights, so install and uninstall each show a UAC prompt.",
-        "Settings and logs are kept in 'config' and 'log' next to the executable; 'config' is persisted so settings survive updates."
+        "Settings and logs are kept in 'config' and 'log' next to the executable; 'config' is persisted so settings survive updates.",
+        "The download goes through the vendor's release endpoint, which redirects to a signed CDN address; the signature is minted per request, so the manifest keeps the endpoint instead of a link that would expire."
     ],
     "depends": "7zip",
     "architecture": {
         "64bit": {
-            "url": "https://a56.gdl.netease.com/UURemote_Setup_4.46.0.4716_1104140726_gwqd.exe",
+            "url": "https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd#/UURemote_Setup.exe",
             "hash": "ee378fcfd7147df776e380324ad462fabb795014cf95cd011a793b1500cb069d"
         }
     },
@@ -135,12 +136,12 @@
             "}",
             "$best.Url"
         ],
-        "regex": "(?<url>https://[^/?]+/UURemote_Setup_([\\d.]+)_(?<build>\\d+)_gwqd\\.exe)"
+        "regex": "UURemote_Setup_([\\d.]+)_(?<build>\\d+)_gwqd\\.exe"
     },
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "$matchUrl"
+                "url": "https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd#/UURemote_Setup.exe"
             }
         }
     }
