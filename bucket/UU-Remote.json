@@ -14,7 +14,7 @@
     "architecture": {
         "64bit": {
             "url": "https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd#/UURemote_Setup.exe",
-            "hash": "f7bef4162213b038a246e05e130b40dde98610aeed19b3691e6e9497dc508dc4"
+            "hash": "fb2d24a40a51ae82701ae2d145db387df4fb63f8bad2d020db4afccda928195e"
         }
     },
     "pre_install": [
