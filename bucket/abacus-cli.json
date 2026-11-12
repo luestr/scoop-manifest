@@ -1,5 +1,5 @@
 {
-    "version": "0.7.8",
+    "version": "0.7.9",
     "description": "Terminal-based coding agent that reads code, edits files and runs commands in your repository",
     "homepage": "https://github.com/empero-org/abacus",
     "license": {
@@ -9,8 +9,8 @@
     "notes": "Run 'abacus setup' once to connect a model provider. Use 'scoop update abacus-cli' instead of 'abacus update' so Scoop keeps managing the installation.",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/empero-org/abacus/releases/download/v0.7.8/abacus-x86_64-pc-windows-msvc.exe#/abacus.exe",
-            "hash": "4829c5a6bd2569ff6e91f5823f93eb45bd9c68fff43da172c3b4b19797a761db"
+            "url": "https://github.com/empero-org/abacus/releases/download/v0.7.9/abacus-x86_64-pc-windows-msvc.exe#/abacus.exe",
+            "hash": "131bc04e181846af602617db079d0b8d20cbdf89b81212b24e65dd5a5fb6a353"
         }
     },
     "bin": "abacus.exe",
