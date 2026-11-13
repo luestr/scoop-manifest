@@ -11,21 +11,19 @@ scoop install luestr/<app>
 
 ## Apps
 
-<!-- apps:start -->
 | Manifest | Description |
 |---|---|
 | `abacus-cli` | Terminal-based coding agent that reads code, edits files and runs commands in your repository |
 | `Adguard` | System-wide ad blocker, tracker filter and privacy guard for Windows |
-| `Argus` | Task manager with per-process performance graphs, startup app control and a Task Manager replacement |
 | `cherry-studio` | Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base |
-| `Clippi-Desktop` | Lightweight clipboard manager built with Rust and GPUI |
+| `Clippi-Desktop` | A lightweight clipboard manager built with Rust and GPUI |
 | `deckle` | Fast native Markdown editor and notes workspace |
 | `Finch` | An agent client for local execution, memory and desktop workflows |
 | `Flectar-Mail` | A fast native mail client with instant startup and a small memory footprint |
 | `Git-Agent` | A native desktop Git client for reviewing changes, browsing history and resolving conflicts |
 | `github-stars-manager` | AI-powered manager for GitHub starred repositories with semantic search, auto-categorization and release tracking |
 | `godwit` | Open-source IMAP/SMTP email client with an AI assistant |
-| `grit` | Reimplementing Git in Rust. Like a boss |
+| `grit` | Reimplementing Git in Rust (CLI) |
 | `hop` | Native proxy client for mihomo (Clash.Meta) with TUN, rules and subscriptions |
 | `JCode-Desktop` | Native spatial desktop client for Jcode, a coding agent driven by Claude or ChatGPT subscriptions |
 | `kitter-desktop` | A simple, lightweight skill manager built in Rust |
@@ -38,15 +36,14 @@ scoop install luestr/<app>
 | `RcloneDrive` | Mount cloud storage as a local drive through rclone |
 | `sniffy-desktop` | An open-source traffic capture and debugging proxy for HTTP/HTTPS, WebSocket, gRPC and SSE |
 | `tty7-Desktop` | A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents |
-| `tty7-Desktop-nightly` | A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents (nightly) |
+| `tty7-Desktop-nightly` | A terminal workbench in pure Rust (nightly build) |
 | `UnBlock` | Find and unlock files stuck in 'File in Use' or 'Access Denied' on Windows |
 | `UU-Remote` | NetEase UU Remote: remote desktop and remote game streaming from any device |
-| `WorkBuddy-CN` | AI agent for everyday office work that turns a single sentence into finished reports, decks and spreadsheets |
 | `Wu-Desktop` | The fast, native code editor and agent workspace |
-| `yapfast-nightly` | A Discord client without the web browser, native and written in Rust |
+| `yapfast-nightly` | A Discord client without the web browser, native and written in Rust (nightly) |
 | `yapfast-releases` | A Discord client without the web browser, native and written in Rust |
+| `WorkBuddy-CN` | AI agent for everyday office work that turns a single sentence into finished reports, decks and spreadsheets |
 | `Zen-Desktop` | System-wide ad-blocker and privacy guard for Windows, macOS and Linux |
-<!-- apps:end -->
 
 ## Keeping manifests up to date
 
@@ -58,10 +55,6 @@ manifest's newest upstream version through its `checkver` block, rewrites
 `notes`, …) from the `autoupdate` block, then commits and pushes the result.
 The GitHub-specific lookup rules (latest tag, explicit tag, asset URLs and
 SHA-256 sources) are documented in that project's `docs/github-release.md`.
-The same run rebuilds the Apps table above from every manifest's `description`,
-ordered by manifest file name, so new, removed and re-described apps need no
-README edit. The table lives between the `<!-- apps:start -->` and
-`<!-- apps:end -->` markers; edit only the text outside them.
 
 Clone the tool next to this repository and point its `scoop_maintainer.toml` at
 this checkout:
