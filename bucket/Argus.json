@@ -6,7 +6,7 @@
     "notes": [
         "The vendor's NSIS setup is unpacked during install instead of being run: only 'argus.exe' is kept, so nothing is registered on the system (no uninstall entry, no vendor Start menu shortcut, no run-at-login entry) and Scoop owns every file.",
         "That layout is the vendor's single-file build, so Argus calls itself portable: it shows a one-time notice about that and never downloads or installs an update by itself. Update with 'scoop update argus'. Administrator mode and the privileged service are set up by Argus itself and need their own elevation.",
-        "The built-in update check is switched off: '%APPDATA%\\dev.argus.taskmanager\\settings.json' is seeded, or patched when it already exists, so 'updateCheck' ends up false and no release feed is polled in the background. The switch can still be turned back on in the settings.",
+        "The built-in update check is switched off: '%APPDATA%\\dev.argus.taskmanager\\settings.json' is seeded, or patched when it already exists (a backup is written when it cannot be parsed), so 'updateCheck' ends up false and no release feed is polled in the background. The switch can still be turned back on in the settings, but the next Scoop update turns it off again.",
         "'scoop uninstall', like every install, also removes a run-at-login value that points into the Scoop directory; switching on 'start with Windows' inside Argus adds one back."
     ],
     "depends": "7zip",
@@ -37,8 +37,11 @@
         "$cfg = Join-Path $cfgDir 'settings.json'",
         "New-Item -ItemType Directory -Path $cfgDir -Force | Out-Null",
         "$settings = $null",
-        "if (Test-Path -LiteralPath $cfg) { try { $settings = Get-Content -LiteralPath $cfg -Raw | ConvertFrom-Json } catch { $settings = $null } }",
-        "if ($settings -isnot [pscustomobject]) { $settings = [pscustomobject]@{} }",
+        "if (Test-Path -LiteralPath $cfg) { try { $settings = Get-Content -LiteralPath $cfg -Raw | ConvertFrom-Json } catch { Write-Warning 'Argus settings.json could not be parsed; a backup will be kept.' } }",
+        "if ($settings -isnot [pscustomobject]) {",
+        "    if (Test-Path -LiteralPath $cfg) { Copy-Item -LiteralPath $cfg -Destination \"$cfg.bak\" -Force }",
+        "    $settings = [pscustomobject]@{}",
+        "}",
         "$settings | Add-Member -NotePropertyName updateCheck -NotePropertyValue $false -Force",
         "[System.IO.File]::WriteAllText($cfg, ($settings | ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding($false)))",
         "$runKey = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'",
