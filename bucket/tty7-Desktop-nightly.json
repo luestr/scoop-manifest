@@ -1,5 +1,5 @@
 {
-    "version": "26.10.1-nightly.202610272136",
+    "version": "26.10.1-nightly.202611122324",
     "description": "A terminal workbench in pure Rust: shells, persistent sessions, SSH and coding agents (nightly)",
     "homepage": "https://tty7.io",
     "license": "Apache-2.0",
@@ -13,12 +13,12 @@
     ],
     "architecture": {
         "64bit": {
-            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-26.10.1-nightly.202610272136-windows-x86_64.zip",
-            "hash": "18787aacc24d31b10f4513843d6c9d6309f3259fdd9033102bc67f60b564e58c"
+            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-26.10.1-nightly.202611122324-windows-x86_64.zip",
+            "hash": "e76da23afa5e9c05fb2a2a2c044a701bfcaddffe6b498837b12d37dfb36ba27d"
         },
         "arm64": {
-            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-26.10.1-nightly.202610272136-windows-arm64.zip",
-            "hash": "d49d08c5ae69f1a2e44f8096f719b4842aef5058461a41a6d9afd539cbcf2e61"
+            "url": "https://github.com/l0ng-ai/tty7/releases/download/nightly/tty7-26.10.1-nightly.202611122324-windows-arm64.zip",
+            "hash": "3e28979141f8a8224906ee9d31fdf697035014c1e0ca91ebb3a2dd6188ac15ab"
         }
     },
     "post_install": "Remove-Item \"$dir\\tty7-updater.exe\" -Force -ErrorAction SilentlyContinue",
