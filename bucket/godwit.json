@@ -1,5 +1,5 @@
 {
-    "version": "1.39.0",
+    "version": "1.39.1",
     "description": "Open-source IMAP/SMTP email client with an AI assistant",
     "homepage": "https://godwit.email/",
     "license": "Apache-2.0",
@@ -11,12 +11,12 @@
     ],
     "architecture": {
         "64bit": {
-            "url": "https://dl.godwit.email/godwit-setup-1.39.0-amd64.exe",
-            "hash": "0f1d89e8a7e467fa329b3805147c335286c66b7e280af64144d09ce5e5015bd9"
+            "url": "https://dl.godwit.email/godwit-setup-1.39.1-amd64.exe",
+            "hash": "910c1cbf55c11105e63d15f1d13d4eaba9fb9596f2e32f4c5ac7753b53f2e43a"
         },
         "arm64": {
-            "url": "https://dl.godwit.email/godwit-setup-1.39.0-arm64.exe",
-            "hash": "3431eb7d80b9c53608a1cc948f76bb2cd7dd204256c5f669387ee17bc581fbfb"
+            "url": "https://dl.godwit.email/godwit-setup-1.39.1-arm64.exe",
+            "hash": "429a03d9f4619c9713d9393cc7791ddb5472b879015b580f51837bb07379f448"
         }
     },
     "installer": {
