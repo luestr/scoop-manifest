@@ -1,5 +1,5 @@
 {
-    "version": "0.5.2",
+    "version": "0.5.3",
     "description": "Native proxy client for mihomo (Clash.Meta) with TUN, rules and subscriptions",
     "homepage": "https://github.com/marukolibro/Hop",
     "license": "GPL-3.0-only",
@@ -11,8 +11,8 @@
     ],
     "architecture": {
         "64bit": {
-            "url": "https://github.com/marukolibro/Hop/releases/download/v0.5.2/hop-0.5.2-windows-amd64.tar.gz",
-            "hash": "37d77b40ee2532277b324c55d1d7c1c5b70188b43dd19798a660af15b0d14b40"
+            "url": "https://github.com/marukolibro/Hop/releases/download/v0.5.3/hop-0.5.3-windows-amd64.tar.gz",
+            "hash": "604320db34224876172581a2d1b4f0f024c77e9ccb138998fe6879ff6959bc4a"
         }
     },
     "shortcuts": [
