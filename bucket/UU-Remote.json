@@ -1,5 +1,5 @@
 {
-    "version": "4.48.0.5446",
+    "version": "4.48.1.5606",
     "description": "NetEase UU Remote: remote desktop and remote game streaming from any device",
     "homepage": "https://uu.163.com/",
     "license": "Proprietary",
@@ -14,7 +14,7 @@
     "architecture": {
         "64bit": {
             "url": "https://api.nrd.nie.163.com/api/v1/release/dl/1?channel=gwqd#/UURemote_Setup.exe",
-            "hash": "e2f48009ffdd29d4648ca87c88b110158ab2c07b86e0b07d51a8859916016f82"
+            "hash": "44d256737c33ec8ea49c8e0115223dd3a7a94b0cdd760bbaefccba4ea55af4c1"
         }
     },
     "pre_install": [
