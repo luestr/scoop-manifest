@@ -1,5 +1,5 @@
 {
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "Third-party QQ Music client with a native interface, player and desktop lyrics",
     "homepage": "https://github.com/Amamiya23/mygo-qyin",
     "license": "AGPL-3.0-only",
@@ -10,12 +10,12 @@
     ],
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v0.5.0/lilt-0.5.0-windows-amd64.tar.gz",
-            "hash": "e8973e9e2d7608f6b498585a4193486d34cb4c97dd84b5103f9d37b01aa30ece"
+            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v0.5.1/lilt-0.5.1-windows-amd64.tar.gz",
+            "hash": "3a210df6ab7700c98652966246c5bd06fc62b43f9525c322ba19c61c12442c96"
         },
         "arm64": {
-            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v0.5.0/lilt-0.5.0-windows-arm64.tar.gz",
-            "hash": "efbd52018dcf37e238011f9e8d97c0e3c5095049c34b0ea2b1a62ae9f03eebc2"
+            "url": "https://github.com/Amamiya23/mygo-qyin/releases/download/v0.5.1/lilt-0.5.1-windows-arm64.tar.gz",
+            "hash": "072b6c18426503dfb1e018542af4169b15ea346a1c0968ab963af22fa761ceef"
         }
     },
     "post_install": [
