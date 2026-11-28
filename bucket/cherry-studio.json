@@ -1,5 +1,5 @@
 {
-    "version": "2.2.4",
+    "version": "2.2.5",
     "description": "Desktop AI workspace for chatting with multiple model providers, running agents and managing a local knowledge base",
     "homepage": "https://cherry-ai.com",
     "license": "AGPL-3.0-only",
@@ -13,12 +13,12 @@
     },
     "architecture": {
         "64bit": {
-            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.2.4/Cherry-Studio-2.2.4-win-x64-setup.exe",
-            "hash": "97d17eb3717d0f500e4a513f9a36b285ea15de92b420db8d31a870c9285dd996"
+            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.2.5/Cherry-Studio-2.2.5-win-x64-setup.exe",
+            "hash": "0a6625fddc66604a3934137ca5d6760e79a24400ff7d34019eb8905952a877ad"
         },
         "arm64": {
-            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.2.4/Cherry-Studio-2.2.4-win-arm64-setup.exe",
-            "hash": "2b6344481e5bc0728fcb5352e62bd9510bb4e70ccfec77ecf6fa65fadf409806"
+            "url": "https://github.com/CherryHQ/cherry-studio/releases/download/v2.2.5/Cherry-Studio-2.2.5-win-arm64-setup.exe",
+            "hash": "77e54ba5722cd8598dc1b95ea24ae8437bf47cd6b3b30c3e54d87a6526129d88"
         }
     },
     "pre_install": [
