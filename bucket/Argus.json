@@ -1,5 +1,5 @@
 {
-    "version": "0.6.0",
+    "version": "0.7.0",
     "description": "Task manager with per-process performance graphs, startup app control and a Task Manager replacement",
     "homepage": "https://argustask.com",
     "license": "AGPL-3.0-only",
@@ -12,8 +12,8 @@
     "depends": "7zip",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Ray-lea/Argus/releases/download/v0.6.0/Argus_0.6.0_x64-setup.exe",
-            "hash": "6c9679f5fd418c46db12befaf63024803f507e6eaaaae4939019dc37705a9218"
+            "url": "https://github.com/Ray-lea/Argus/releases/download/v0.7.0/Argus_0.7.0_x64-setup.exe",
+            "hash": "d09173ca0d5c7092852f1691cfa74603a9ddfe8fba53e28b9c62da3462585c1d"
         }
     },
     "pre_install": [
